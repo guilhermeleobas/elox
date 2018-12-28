@@ -73,6 +73,29 @@ defmodule Lexer do
     c == "\""
   end
 
+  def is_slash(c) do
+    c == "/"
+  end
+
+  def slash_or_comment(chars = [h | t], tokens) do
+    # we already know that h is a slash
+    case hd(t) do
+      "/" ->
+        {comment, rest} = Enum.split_while(chars, fn(x) -> !is_endline(x) end)
+        cond do
+          rest == [] -> 
+            tokenize([], tokens)
+          hd(rest) == "\n" -> 
+            tokenize(tl(rest), tokens)
+          true -> 
+            tokenize(rest, tokens)
+        end
+      _ ->
+        token = Token.new(type: SLASH, lexeme: h)
+        tokenize(t, [token | tokens])
+    end
+  end
+
   def single_char_op(_chars = [char | rest], tokens) do
     token = 
       case char do
@@ -86,17 +109,43 @@ defmodule Lexer do
         "+" -> Token.new(type: PLUS, lexeme: char)
         ";" -> Token.new(type: SEMICOLON, lexeme: char)
         "*" -> Token.new(type: STAR, lexeme: char)
-         _  -> error("Unexpected char " <> char)
+         _  -> raise LexerError, message: "Lexer Error: Unexpected char " <> char
       end
 
     tokenize(rest, [token | tokens]) # remember to do a reverse in the end
   end
 
+  def get_identifier_type(lexeme) do
+    types = %{
+      "and" => AND,
+      "class" => CLASS,
+      "else" => ELSE,
+      "false" => FALSE,
+      "fun" => FUN,
+      "for" => FOR,
+      "if" => IF,
+      "nil" => NIL,
+      "or" => OR,
+      "print" => PRINT,
+      "return" => RETURN,
+      "super" => SUPER,
+      "this" => THIS,
+      "true" => TRUE,
+      "var" => VAR,
+      "while" => WHILE,
+    }
+
+    # tries to match the lexeme against the reserved
+    # ones and fallback to IDENTIFIER if not found.
+    Map.get(types, lexeme, IDENTIFIER)
+  end
+
   def identifier_op(chars, tokens) do
     {identifier, rest} = Enum.split_while(chars, &is_alpha/1)
     identifier = Enum.join(identifier) 
-    
-    token = Token.new(type: IDENTIFIER, lexeme: identifier)
+
+    type = get_identifier_type(identifier)
+    token = Token.new(type: type, lexeme: identifier)
     tokenize(rest, [token | tokens])
   end
 
@@ -173,9 +222,13 @@ defmodule Lexer do
     tokenize(rest, [token | tokens])
   end
 
+  def is_endline(c) do
+    c == "\n"
+  end
+
   def is_whitespace(c) do
     (c == "") || (c == " ") || 
-    (c == "\n") || (c == "\t") || (c == "\r")
+    (c == "\t") || (c == "\r")
   end
 
   def tokenize(content) do
@@ -185,7 +238,8 @@ defmodule Lexer do
 
   def tokenize(chars = [char | rest], tokens) do
     cond do
-      is_whitespace(char) -> tokenize(rest, tokens)
+      is_slash(char) -> slash_or_comment(chars, tokens)
+      is_whitespace(char) || is_endline(char) -> tokenize(rest, tokens)
       is_alpha(char) -> identifier_op(chars, tokens)
       is_quote(char) -> string_op(chars, tokens)
       is_digit(char) -> number_op(chars, tokens)
@@ -195,7 +249,7 @@ defmodule Lexer do
   end
 
   def tokenize([], tokens) do
-    Enum.reverse(tokens)
+    Enum.reverse([Token.new(type: EOF, lexeme: "") | tokens])
   end
 
 end
