@@ -16,6 +16,14 @@ defmodule LexerTest do
     assert token == [Token.new(type: NUMBER, lexeme: "12.34")]
   end
 
+  @tag :invalid
+  test "invalid digit" do
+    # assert_raise LexerError, Lexer.tokenize("1234.")
+    assert_raise LexerError, "Error creating token for number 1234.", fn -> 
+      Lexer.tokenize("1234.")
+    end
+  end
+
   test "quotation mark" do
     assert Lexer.is_quote ("\"")
     assert Lexer.is_quote("h") == false

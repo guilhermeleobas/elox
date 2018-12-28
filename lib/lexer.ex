@@ -49,6 +49,10 @@ tokens = %{
   EOF: 38,
 }
 
+defmodule LexerError do
+  defexception message: "Lexer error"
+end
+
 defmodule Lexer do
 
   def error(message) do
@@ -67,10 +71,6 @@ defmodule Lexer do
 
   def is_quote(c) do
     c == "\""
-  end
-
-  def is_num(c) do
-    is_digit(c) || (c == ".")
   end
 
   def single_char_op(_chars = [char | rest], tokens) do
@@ -114,7 +114,7 @@ defmodule Lexer do
     (c == "=") || (c == "!") || (c == "<") || (c == ">")
   end
 
-  def double_char_op(chars = [h | t], tokens) do
+  def double_char_op(_chars = [h | t], tokens) do
     token = 
       case h do
         "=" when hd(t) == "=" -> 
@@ -149,10 +149,27 @@ defmodule Lexer do
 
 
   def number_op(chars, tokens) do
-    {number, rest} = Enum.split_while(chars, &is_num/1)
-    number = Enum.join(number)
+    {number_arr, rest} = Enum.split_while(chars, &is_digit/1)
+    # integer = Enum.join(number_arr)
 
-    token = Token.new(type: NUMBER, lexeme: number)
+    # Check if we have a dot on hd(rest)
+    {number_arr, rest} = 
+      case hd(rest) do
+        "." -> 
+          {frac_arr, rest2} = Enum.split_while(tl(rest), &is_digit/1)
+          case frac_arr do
+            [] -> 
+              number = Enum.join(number_arr) <> "."
+              raise LexerError, message: "Error creating token for number " <> number
+            _ -> {number_arr ++ ["."] ++ frac_arr, rest2}
+          end
+        _ -> 
+          {number_arr, rest}
+      end
+
+    integer = Enum.join(number_arr)
+    token = Token.new(type: NUMBER, lexeme: integer)
+
     tokenize(rest, [token | tokens])
   end
 
@@ -161,7 +178,7 @@ defmodule Lexer do
     (c == "\n") || (c == "\t") || (c == "\r")
   end
 
-  def tokenize (content) do
+  def tokenize(content) do
     chars = String.split(content, "", trim: true)
     tokenize(chars, [])
   end
