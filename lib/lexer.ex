@@ -1,54 +1,3 @@
-
-tokens = %{
-  # Single-character tokens
-  LEFT_PAREN: 0,
-  RIGHT_PAREN: 1,
-  LEFT_BRACE: 2,
-  RIGHT_BRACE: 3,
-  COMMA: 4,
-  DOT: 5,
-  MINUS: 6,
-  PLUS: 7,
-  SEMICOLON: 8,
-  SLASH: 9,
-  STAR: 10,
-
-  # One or two characters tokens
-  BANG: 11,
-  BANG_EQUAL: 12,
-  EQUAL: 13,
-  EQUAL_EQUAL: 14,
-  GREATER: 15,
-  GREATER_EQUAL: 16,
-  LESS: 17,
-  LESS_EQUAL: 18,
-
-  # Literals
-  IDENTIFIER: 19,
-  STRING: 20,
-  NUMBER: 21,
-
-  # Keywords
-  AND: 22,
-  CLASS: 23,
-  ELSE: 24,
-  FALSE: 25,
-  FUN: 26,
-  FOR: 27,
-  IF: 28,
-  NIL: 29,
-  OR: 30,
-  PRINT: 31,
-  RETURN: 32,
-  SUPER: 33,
-  THIS: 34,
-  TRUE: 35,
-  VAR: 36,
-  WHILE: 37,
-
-  EOF: 38,
-}
-
 defmodule LexerError do
   defexception message: "Lexer error"
 end
@@ -109,7 +58,7 @@ defmodule Lexer do
         "+" -> Token.new(type: PLUS, lexeme: char)
         ";" -> Token.new(type: SEMICOLON, lexeme: char)
         "*" -> Token.new(type: STAR, lexeme: char)
-         _  -> raise LexerError, message: "Lexer Error: Unexpected char " <> char
+         _  -> raise LexerError, message: "Lexer Error: Unexpected char #{char}"
       end
 
     tokenize(rest, [token | tokens]) # remember to do a reverse in the end
@@ -152,10 +101,10 @@ defmodule Lexer do
   def string_op(_chars = [h | t], tokens) do
     # h is "
     # t is the rest of the string
-    # Let's consume the string until we found another quotation mark
+    # Let's consume the string until we find another quotation mark
     {identifier, rest} = Enum.split_while(t, fn(x) -> !is_quote(x) end)
     identifier = Enum.join(identifier)
-    token = Token.new(type: STRING, lexeme: h <> identifier <> h)
+    token = Token.new(type: STRING, lexeme: "\"#{identifier}\"")
     tokenize(tl(rest), [token | tokens])
   end
 
@@ -196,20 +145,26 @@ defmodule Lexer do
     end
   end
 
+  def consume_digits(chars) do
+    {number_arr, rest} = Enum.split_while(chars, &is_digit/1)
+
+  end
+
 
   def number_op(chars, tokens) do
     {number_arr, rest} = Enum.split_while(chars, &is_digit/1)
-    # integer = Enum.join(number_arr)
 
     # Check if we have a dot on hd(rest)
     {number_arr, rest} = 
-      case hd(rest) do
+      # Here we use List.first instead of hd because rest can be an
+      # empty list and if it is, we match on the last condition ( _ -> ... ).
+      case List.first(rest) do
         "." -> 
           {frac_arr, rest2} = Enum.split_while(tl(rest), &is_digit/1)
           case frac_arr do
             [] -> 
               number = Enum.join(number_arr) <> "."
-              raise LexerError, message: "Error creating token for number " <> number
+              raise LexerError, message: "Error creating token for number #{number}"
             _ -> {number_arr ++ ["."] ++ frac_arr, rest2}
           end
         _ -> 

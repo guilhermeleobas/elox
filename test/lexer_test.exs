@@ -35,6 +35,11 @@ defmodule LexerTest do
     assert hd(token) == Token.new(type: NUMBER, lexeme: "12.34")
   end
 
+  test "single digit" do
+    token = Lexer.tokenize("1234")
+    assert hd(token) == Token.new(type: NUMBER, lexeme: "1234")
+  end
+
   @tag :invalid
   test "invalid digit" do
     # assert_raise LexerError, Lexer.tokenize("1234.")
