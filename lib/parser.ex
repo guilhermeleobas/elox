@@ -4,6 +4,13 @@ end
 
 defmodule Parser do
 
+  alias Lox.Ast.{
+    Literal,
+    Unary,
+    Binary,
+    Grouping,
+  }
+
   @enforce_keys [:curr, :peek, :rest, :errors]
   defstruct [:curr, :peek, :rest, :errors]
 
@@ -12,101 +19,146 @@ defmodule Parser do
     %Parser{curr: curr, peek: peek, rest: rest, errors: []}
   end
 
+  defp next_token(%Parser{rest: []} = p) do
+    %{p | curr: p.peek, peek: nil, errors: []}
+  end
+
   defp next_token(%Parser{} = p) do
     [h | t] = p.rest
-    %{p | curr: p.peek, peek: h, rest: t}
+    %{p | curr: p.peek, peek: h, rest: t, errors: []}
   end
 
   defp add_error(%Parser{} = p, message) do
     %{p | errors: [message | p.errors]}
   end
 
+  defp expect(%Parser{} = p, token_type) do
+    if p.curr.type == token_type do
+      next_token(p)
+    else
+      raise ParserError, message: "Expected #{token_type} but got:\n curr: #{p.curr} \n peek: #{p.peek}"
+    end
+  end
+
   def parse(tokens) do
     new(tokens)
-    |> parse_expression([])
+    |> parse_program()
   end
 
-  def parse_expression(p, statements) do
+  def parse_program(%Parser{curr: %Token{type: :EOF}} = _p) do
+    IO.puts "its over now!"
+  end
+
+  def parse_program(p) do
+    {p, expr} = parse_expression(p)
+
+    IO.inspect(expr)
+
+    parse_program(p)
+  end
+
+  def parse_expression(p) do
     # expression → equality ;
 
-    parse_equality(p, statements)
+    parse_equality(p)
   end
 
-  def parse_equality(p, statements) do
+  def parse_equality(p) do
     # equality → comparison ( ( "!=" | "==" ) comparison )* ;
 
-    {p, statements} = parse_comparison(p, statements)
+    {p, left} = parse_comparison(p)
     case p.curr.type do
-      value when value in [BANG_EQUAL, EQUALS_EQUAL] ->
-        parse_comparison(next_token(p), [p.curr | statements])
+      op when op in [:BANG_EQUAL, :EQUAL_EQUAL] ->
+        {p, right} = parse_comparison(next_token(p))
+
+        {p, %Binary{left: left, operator: op, right: right}}
       _ -> 
         msg = "Expected != or == but got #{p.curr}"
-        {add_error(p, msg), statements}
+        {add_error(p, msg), left}
     end
 
   end
 
-  def parse_comparison(p, statements) do
+  def parse_comparison(p) do
     # comparison → addition ( ( ">" | ">=" | "<" | "<=" ) addition )* ;
 
-    {p, statements} = parse_addition(p, statements)
+    {p, left} = parse_addition(p)
+
     case p.curr.type do
-      value when value in [GREATER, GREATER_EQUAL, LESS, LESS_EQUAL] ->
-        parse_addition(next_token(p), [p.curr | statements])
+      op when op in [:GREATER, :GREATER_EQUAL, :LESS, :LESS_EQUAL] ->
+        {p, right} = parse_addition(next_token(p))
+
+        {p, %Binary{left: left, operator: op, right: right}}
       _ -> 
         msg = "Expected >, >=, <, <= but got #{p.curr}"
-        {add_error(p, msg), statements}
+        {add_error(p, msg), left}
     end
   end
 
-  def parse_addition(p, statements) do
+  def parse_addition(p) do
     # addition → multiplication ( ( "-" | "+" ) multiplication )* ;
 
-    {p, statements} = parse_multiplication(p, statements)
+    {p, left} = parse_multiplication(p)
+
     case p.curr.type do
-      value when value in [MINUS, PLUS] ->
-        parse_multiplication(next_token(p), [p.curr | statements])
+      op when op in [:MINUS, :PLUS] ->
+        {p, right} = parse_multiplication(next_token(p))
+
+        {p, %Binary{left: left, operator: op, right: right}}
       _ -> 
         msg = "Expected - or + but got #{p.curr}"
-        {add_error(p, msg), statements}
+        {add_error(p, msg), left}
     end
   end
 
-  def parse_multiplication(p, statements) do
+  def parse_multiplication(p) do
     # multiplication → unary ( ( "/" | "*" ) unary )* ;
     
-    {p, statements} = parse_unary(p, statements)
+    {p, left} = parse_unary(p)
+
     case p.curr.type do
-      value when value in [STAR, SLASH] ->
-        parse_unary(next_token(p), [p.curr | statements])
+      op when op in [:STAR, :SLASH] ->
+        {p, right} = parse_unary(next_token(p))
+
+        {p, %Binary{left: left, operator: op, right: right}}
       _ -> 
         msg = "Expected / or * but got #{p.curr}"
-        {add_error(p, msg), statements}
+        {add_error(p, msg), left}
     end
   end
 
-  def parse_unary(p, statements) do
+  def parse_unary(p) do
     # unary → ( "!" | "-" ) unary
     #         | primary ;
 
     case p.curr.type do
-      value when value in [BANG, MINUS] ->
-        parse_unary(next_token(p), [p.curr | statements])
+      op when op in [:BANG, :MINUS] ->
+        {p, right} = parse_unary(next_token(p))
+
+        {p, %Unary{token: p.curr, operator: op, right: right}}
       _ -> 
-        parse_primary(p, statements)
+        parse_primary(p) # returns {p, literal}. Just propagate
     end
   end
 
-  def parse_primary(p, statements) do
+  def parse_primary(p) do
     # primary → NUMBER | STRING | "false" | "true" | "nil"
     #         | "(" expression ")" ;
 
     case p.curr.type do
-      value when value in [NUMBER, STRING, FALSE, TRUE, NIL] -> 
-        {next_token(p), [p.curr | statements]}
+      type when type in [:NUMBER, :STRING, :FALSE, :TRUE, :NIL] -> 
+        literal = %Literal{token: p.curr, value: p.curr.lexeme}
+        {next_token(p), literal}
+
+      :LEFT_PAREN -> 
+        # {p, expr} = parse_expression(next_token(p))
+        {p, expr} = parse_expression(next_token(p))
+        
+        {expect(p, :RIGHT_PAREN), %Grouping{expr: expr}}
+
       _ -> 
         msg = "Expected a number, string, false, true, nil, (expr) but got #{p.curr}"
-        {add_error(p, msg), statements}
+        {add_error(p, msg), nil}
     end
   end
 

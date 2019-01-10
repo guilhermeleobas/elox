@@ -40,7 +40,7 @@ defmodule Lexer do
             tokenize(rest, tokens)
         end
       _ ->
-        token = Token.new(type: SLASH, lexeme: h)
+        token = Token.new(type: :SLASH, lexeme: h)
         tokenize(t, [token | tokens])
     end
   end
@@ -48,16 +48,16 @@ defmodule Lexer do
   def single_char_op(_chars = [char | rest], tokens) do
     token = 
       case char do
-        "(" -> Token.new(type: LEFT_PAREN, lexeme: char)
-        ")" -> Token.new(type: RIGHT_PAREN, lexeme: char)
-        "{" -> Token.new(type: LEFT_BRACE, lexeme: char)
-        "}" -> Token.new(type: RIGHT_BRACE, lexeme: char)
-        "," -> Token.new(type: COMMA, lexeme: char)
-        "." -> Token.new(type: DOT, lexeme: char)
-        "-" -> Token.new(type: MINUS, lexeme: char)
-        "+" -> Token.new(type: PLUS, lexeme: char)
-        ";" -> Token.new(type: SEMICOLON, lexeme: char)
-        "*" -> Token.new(type: STAR, lexeme: char)
+        "(" -> Token.new(type: :LEFT_PAREN, lexeme: char)
+        ")" -> Token.new(type: :RIGHT_PAREN, lexeme: char)
+        "{" -> Token.new(type: :LEFT_BRACE, lexeme: char)
+        "}" -> Token.new(type: :RIGHT_BRACE, lexeme: char)
+        "," -> Token.new(type: :COMMA, lexeme: char)
+        "." -> Token.new(type: :DOT, lexeme: char)
+        "-" -> Token.new(type: :MINUS, lexeme: char)
+        "+" -> Token.new(type: :PLUS, lexeme: char)
+        ";" -> Token.new(type: :SEMICOLON, lexeme: char)
+        "*" -> Token.new(type: :STAR, lexeme: char)
          _  -> raise LexerError, message: "Lexer Error: Unexpected char #{char}"
       end
 
@@ -66,27 +66,27 @@ defmodule Lexer do
 
   def get_identifier_type(lexeme) do
     types = %{
-      "and" => AND,
-      "class" => CLASS,
-      "else" => ELSE,
-      "false" => FALSE,
-      "fun" => FUN,
-      "for" => FOR,
-      "if" => IF,
-      "nil" => NIL,
-      "or" => OR,
-      "print" => PRINT,
-      "return" => RETURN,
-      "super" => SUPER,
-      "this" => THIS,
-      "true" => TRUE,
-      "var" => VAR,
-      "while" => WHILE,
+      "and" => :AND,
+      "class" => :CLASS,
+      "else" => :ELSE,
+      "false" => :FALSE,
+      "fun" => :FUN,
+      "for" => :FOR,
+      "if" => :IF,
+      "nil" => :NIL,
+      "or" => :OR,
+      "print" => :PRINT,
+      "return" => :RETURN,
+      "super" => :SUPER,
+      "this" => :THIS,
+      "true" => :TRUE,
+      "var" => :VAR,
+      "while" => :WHILE,
     }
 
     # tries to match the lexeme against the reserved
     # ones and fallback to IDENTIFIER if not found.
-    Map.get(types, lexeme, IDENTIFIER)
+    Map.get(types, lexeme, :IDENTIFIER)
   end
 
   def identifier_op(chars, tokens) do
@@ -104,7 +104,7 @@ defmodule Lexer do
     # Let's consume the string until we find another quotation mark
     {identifier, rest} = Enum.split_while(t, fn(x) -> !is_quote(x) end)
     identifier = Enum.join(identifier)
-    token = Token.new(type: STRING, lexeme: "\"#{identifier}\"")
+    token = Token.new(type: :STRING, lexeme: "\"#{identifier}\"")
     tokenize(tl(rest), [token | tokens])
   end
 
@@ -116,29 +116,29 @@ defmodule Lexer do
     token = 
       case h do
         "=" when hd(t) == "=" -> 
-          Token.new(type: EQUAL_EQUAL, lexeme: "==")
+          Token.new(type: :EQUAL_EQUAL, lexeme: "==")
         "=" -> 
-          Token.new(type: EQUAL, lexeme: "=")
+          Token.new(type: :EQUAL, lexeme: "=")
 
         "!" when hd(t) == "=" -> 
-          Token.new(type: BANG_EQUAL, lexeme: "!=")
+          Token.new(type: :BANG_EQUAL, lexeme: "!=")
         "!" ->
-          Token.new(type: BANG, lexeme: "!")
+          Token.new(type: :BANG, lexeme: "!")
 
         "<" when hd(t) == "=" -> 
-          Token.new(type: LESS_EQUAL, lexeme: "<=")
+          Token.new(type: :LESS_EQUAL, lexeme: "<=")
         "<" ->
-          Token.new(type: LESS, lexeme: "<")
+          Token.new(type: :LESS, lexeme: "<")
 
         ">" when hd(t) == "=" ->
-          Token.new(type: GREATER_EQUAL, lexeme: ">=")
+          Token.new(type: :GREATER_EQUAL, lexeme: ">=")
         ">" ->
-          Token.new(type: GREATER, lexeme: ">")
+          Token.new(type: :GREATER, lexeme: ">")
       end
 
     type = token.type
     case type do
-      type when type in [EQUAL, BANG, LESS, GREATER] ->
+      type when type in [:EQUAL, :BANG, :LESS, :GREATER] ->
         tokenize(t, [token | tokens])
       _ ->
         tokenize(tl(t), [token | tokens])
@@ -172,7 +172,7 @@ defmodule Lexer do
       end
 
     integer = Enum.join(number_arr)
-    token = Token.new(type: NUMBER, lexeme: integer)
+    token = Token.new(type: :NUMBER, lexeme: integer)
 
     tokenize(rest, [token | tokens])
   end
@@ -204,7 +204,7 @@ defmodule Lexer do
   end
 
   def tokenize([], tokens) do
-    Enum.reverse([Token.new(type: EOF, lexeme: "") | tokens])
+    Enum.reverse([Token.new(type: :EOF, lexeme: "") | tokens])
   end
 
 end

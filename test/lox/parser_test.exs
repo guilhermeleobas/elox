@@ -3,8 +3,7 @@ defmodule ParserTest do
   doctest Parser
 
   test "a simple test" do
-    Lexer.tokenize("2 == 2")
-    |> IO.inspect 
+    Lexer.tokenize("(2 + 3) - 4")
     |> Parser.parse
     |> IO.inspect
   end

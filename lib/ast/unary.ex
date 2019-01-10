@@ -1,6 +1,6 @@
 defmodule Lox.Ast.Unary do
-  alias Lox.Ast.Node
 
-  @enforce_keys []
-  defstruct [:token, :value]
+  @enforce_keys [:token, :operator, :right]
+  defstruct [:token, :operator, :right]
+
 end
