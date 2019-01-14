@@ -37,7 +37,7 @@ defmodule LexerTest do
 
   test "single digit" do
     token = Lexer.tokenize("1234")
-    assert hd(token) == Token.new(type: :NUMBER, lexeme: "1234")
+    assert hd(token) == Token.new(type: :NUMBER, lexeme: "1234.0")
   end
 
   @tag :invalid
@@ -56,6 +56,11 @@ defmodule LexerTest do
   test "string tokenize" do
     token = "\"hello world\"" |> Lexer.tokenize
     assert hd(token) == Token.new(type: :STRING, lexeme: "\"hello world\"")
+  end
+
+  test "empty string" do
+    token = ~s(" ") |> Lexer.tokenize
+    assert hd(token) == Token.new(type: :STRING, lexeme: ~s(" "))
   end
 
   test "equal equal" do

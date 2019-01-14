@@ -18,6 +18,6 @@ end
 
 defimpl String.Chars, for: Token do
   def to_string(%Token{type: type, lexeme: lexeme} = token) do
-    "[lexeme: #{lexeme}, type: #{type}]"
+    "#{lexeme}"
   end
 end

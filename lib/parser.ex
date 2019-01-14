@@ -42,19 +42,18 @@ defmodule Parser do
 
   def parse(tokens) do
     new(tokens)
-    |> parse_program()
+    |> parse_program([])
   end
 
-  def parse_program(%Parser{curr: %Token{type: :EOF}} = _p) do
-    IO.puts "its over now!"
+  def parse_program(%Parser{curr: %Token{type: :EOF}} = _p, stmts) do
+    # IO.puts "its over now!"
+    stmts
   end
 
-  def parse_program(p) do
+  def parse_program(p, stmts) do
     {p, expr} = parse_expression(p)
 
-    IO.inspect(expr)
-
-    parse_program(p)
+    parse_program(p, [expr | stmts])
   end
 
   def parse_expression(p) do
@@ -67,11 +66,13 @@ defmodule Parser do
     # equality → comparison ( ( "!=" | "==" ) comparison )* ;
 
     {p, left} = parse_comparison(p)
-    case p.curr.type do
+    op_token = p.curr
+
+    case op_token.type do
       op when op in [:BANG_EQUAL, :EQUAL_EQUAL] ->
         {p, right} = parse_comparison(next_token(p))
 
-        {p, %Binary{left: left, operator: op, right: right}}
+        {p, %Binary{token: op_token, left: left, operator: op, right: right}}
       _ -> 
         msg = "Expected != or == but got #{p.curr}"
         {add_error(p, msg), left}
@@ -83,12 +84,13 @@ defmodule Parser do
     # comparison → addition ( ( ">" | ">=" | "<" | "<=" ) addition )* ;
 
     {p, left} = parse_addition(p)
+    op_token = p.curr
 
-    case p.curr.type do
+    case op_token.type do
       op when op in [:GREATER, :GREATER_EQUAL, :LESS, :LESS_EQUAL] ->
         {p, right} = parse_addition(next_token(p))
 
-        {p, %Binary{left: left, operator: op, right: right}}
+        {p, %Binary{token: op_token, left: left, operator: op, right: right}}
       _ -> 
         msg = "Expected >, >=, <, <= but got #{p.curr}"
         {add_error(p, msg), left}
@@ -99,12 +101,13 @@ defmodule Parser do
     # addition → multiplication ( ( "-" | "+" ) multiplication )* ;
 
     {p, left} = parse_multiplication(p)
+    op_token = p.curr
 
-    case p.curr.type do
+    case op_token.type do
       op when op in [:MINUS, :PLUS] ->
         {p, right} = parse_multiplication(next_token(p))
 
-        {p, %Binary{left: left, operator: op, right: right}}
+        {p, %Binary{token: op_token, left: left, operator: op, right: right}}
       _ -> 
         msg = "Expected - or + but got #{p.curr}"
         {add_error(p, msg), left}
@@ -115,12 +118,13 @@ defmodule Parser do
     # multiplication → unary ( ( "/" | "*" ) unary )* ;
     
     {p, left} = parse_unary(p)
+    op_token = p.curr
 
-    case p.curr.type do
+    case op_token.type do
       op when op in [:STAR, :SLASH] ->
         {p, right} = parse_unary(next_token(p))
 
-        {p, %Binary{left: left, operator: op, right: right}}
+        {p, %Binary{token: op_token, left: left, operator: op, right: right}}
       _ -> 
         msg = "Expected / or * but got #{p.curr}"
         {add_error(p, msg), left}
@@ -131,11 +135,12 @@ defmodule Parser do
     # unary → ( "!" | "-" ) unary
     #         | primary ;
 
-    case p.curr.type do
+    op_token = p.curr
+    case op_token.type do
       op when op in [:BANG, :MINUS] ->
         {p, right} = parse_unary(next_token(p))
-
-        {p, %Unary{token: p.curr, operator: op, right: right}}
+        # IO.inspect(p.curr)
+        {p, %Unary{token: op_token, operator: op, right: right}}
       _ -> 
         parse_primary(p) # returns {p, literal}. Just propagate
     end
@@ -158,7 +163,7 @@ defmodule Parser do
 
       _ -> 
         msg = "Expected a number, string, false, true, nil, (expr) but got #{p.curr}"
-        {add_error(p, msg), nil}
+        raise ParserError, message: msg
     end
   end
 

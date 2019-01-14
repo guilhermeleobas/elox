@@ -168,7 +168,7 @@ defmodule Lexer do
             _ -> {number_arr ++ ["."] ++ frac_arr, rest2}
           end
         _ -> 
-          {number_arr, rest}
+          {number_arr ++ [".0"], rest}
       end
 
     integer = Enum.join(number_arr)

@@ -4,11 +4,8 @@
 
 defprotocol Lox.Ast.Node do
   @doc "Returns the lexeme associated with the node"
-  def node_lexeme(node)
+  # def node_lexeme(node)
 
   @doc "Returns the type associated with the node"
-  def node_type(node)
-
-  @doc "Implements the to_string method"
-  def to_string(node)
+  # def node_type(node)
 end
