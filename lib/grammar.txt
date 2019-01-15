@@ -1,5 +1,20 @@
+program     → declaration* EOF ;
 
-expression     → equality ;
+declaration → varDecl
+            | statement ;
+
+statement   → exprStmt
+            | printStmt ;
+
+varDecl → "var" IDENTIFIER ( "=" expression )? ";" ;
+
+exprStmt  → expression ";" ;
+printStmt → "print" expression ";" ;
+
+expression → assignment ;
+assignment → IDENTIFIER "=" assignment
+           | equality ;
+
 equality       → comparison ( ( "!=" | "==" ) comparison )* ;
 comparison     → addition ( ( ">" | ">=" | "<" | "<=" ) addition )* ;
 addition       → multiplication ( ( "-" | "+" ) multiplication )* ;

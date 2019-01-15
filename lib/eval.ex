@@ -7,14 +7,27 @@ defmodule Eval do
     Literal,
     Unary,
     Binary,
-    Grouping
+    Grouping,
+    Stmt,
+    PrintStmt,
   }
+
+  defp check_number_operands(operator, left, right) do
+    if !(is_number(left) && is_number(right)) do
+      raise EvalError, message: "Operands must be a number on #{operator}"
+    else
+      true
+    end
+  end
+
+  def eval(%Stmt{} = stmt) do
+    eval(stmt.expr)
+  end
 
   def eval(%Binary{} = expr) do
     left = eval(expr.left)
     right = eval(expr.right)
 
-    result = 
     case expr.operator do
       :STAR -> left * right
       :SLASH -> left / right
@@ -25,6 +38,12 @@ defmodule Eval do
           is_binary(left) && is_binary(right) -> left <> right
           true -> raise EvalError, message: "Error while evaluating binary expr: #{expr}"
         end
+      :GREATER -> left > right
+      :GREATER_EQUAL -> left >= right
+      :LESS -> left < right
+      :LESS_EQUAL -> left <= right
+      :EQUAL_EQUAL -> left == right
+      :BANG_EQUAL -> left != right
     end
   end
 
@@ -42,8 +61,8 @@ defmodule Eval do
 
   def eval(%Literal{} = literal) do
     case literal.token.type do
-      :NUMBER -> literal.value |> Float.parse |> elem(0)
-      :STRING -> literal.value
+      :NUMBER -> literal.token.lexeme |> Float.parse |> elem(0)
+      :STRING -> literal.token.lexeme
       :FALSE -> false
       :TRUE -> true
       :NIL -> nil

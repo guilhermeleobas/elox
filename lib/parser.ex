@@ -9,12 +9,15 @@ defmodule Parser do
     Unary,
     Binary,
     Grouping,
+    Stmt,
+    PrintStmt,
+    VarDecl,
   }
 
   @enforce_keys [:curr, :peek, :rest, :errors]
   defstruct [:curr, :peek, :rest, :errors]
 
-  defp new(tokens) do
+  def from_tokens(tokens) do
     [curr | [peek | rest]] = tokens
     %Parser{curr: curr, peek: peek, rest: rest, errors: []}
   end
@@ -32,6 +35,8 @@ defmodule Parser do
     %{p | errors: [message | p.errors]}
   end
 
+  # `expect` checks if the current token is the expected one
+  # if yes, advance to the next token. Otherwise, throws an error
   defp expect(%Parser{} = p, token_type) do
     if p.curr.type == token_type do
       next_token(p)
@@ -40,26 +45,102 @@ defmodule Parser do
     end
   end
 
+  # `match` returns `true` when the current token is the expected one
+  # `false` otherwise.
+  defp match(%Parser{curr: curr} = _p, token_type) do
+    if curr.type == token_type do
+      true
+    else
+      false
+    end
+  end
+
   def parse(tokens) do
-    new(tokens)
+    from_tokens(tokens)
     |> parse_program([])
   end
 
   def parse_program(%Parser{curr: %Token{type: :EOF}} = _p, stmts) do
-    # IO.puts "its over now!"
     stmts
   end
 
   def parse_program(p, stmts) do
-    {p, expr} = parse_expression(p)
+    # program → declaration* EOF ;
 
-    parse_program(p, [expr | stmts])
+    {p, stmt} = parse_declaration(p)
+
+    parse_program(p, [stmt | stmts])
+  end
+
+  def parse_declaration(p) do
+    # declaration → varDecl
+    #             | statement ;
+
+    cond do
+      match(p, :VAR) -> parse_var_decl(p)
+      true -> parse_statement(p)  
+    end
+  end
+
+  def parse_var_decl(p) do
+    # varDecl → "var" IDENTIFIER ( "=" expression )? ";" ;
+
+    p = expect(p, :VAR)
+    {p, idtn} = {expect(p, :IDENTIFIER), p.curr}
+
+    {p, expr} = 
+    if match(p, :EQUAL) do
+      parse_expression(next_token(p))
+    else
+      {p, nil}
+    end
+
+    {expect(p, :SEMICOLON), %VarDecl{name: idtn, expr: expr}}
+  end
+
+  def parse_statement(p) do
+    # statement → exprStmt
+    #           | printStmt ;
+
+    cond do
+      match(p, :PRINT) -> parse_print_statement(p)
+      true -> parse_expr_statement(p)
+    end
+
+  end
+
+  def parse_expr_statement(p) do
+    # exprStmt  → expression ";" ;
+
+    {p, expr} = parse_expression(p);
+    {expect(p, :SEMICOLON), %Stmt{expr: expr}}
+  end
+
+  def parse_print_statement(p) do
+    # printStmt → "print" expression ";" ;
+
+    p = expect(p, :PRINT)
+    {p, expr} = parse_expression(p)
+    {expect(p, :SEMICOLON), %PrintStmt{expr: expr}}
   end
 
   def parse_expression(p) do
-    # expression → equality ;
+    # expression → assignment ;
+    # assignment → IDENTIFIER "=" assignment
+    #            | equality ;
 
-    parse_equality(p)
+    parse_assignment(p)
+
+  end
+
+  def parse_assignment(p) do
+    
+    if match(p, :IDENTIFIER) do
+      {p, idtn} = {next_token(p) |> expect(:EQUAL), p.curr}
+      # To-do: complete!
+    else
+      parse_equality(p)
+    end
   end
 
   def parse_equality(p) do
@@ -147,16 +228,15 @@ defmodule Parser do
   end
 
   def parse_primary(p) do
-    # primary → NUMBER | STRING | "false" | "true" | "nil"
+    # primary → NUMBER | STRING | "false" | "true" | "nil" | "this" | IDENTIFIER
     #         | "(" expression ")" ;
 
     case p.curr.type do
-      type when type in [:NUMBER, :STRING, :FALSE, :TRUE, :NIL] -> 
-        literal = %Literal{token: p.curr, value: p.curr.lexeme}
+      type when type in [:NUMBER, :STRING, :FALSE, :TRUE, :NIL, :THIS, :IDENTIFIER] -> 
+        literal = %Literal{token: p.curr}
         {next_token(p), literal}
 
       :LEFT_PAREN -> 
-        # {p, expr} = parse_expression(next_token(p))
         {p, expr} = parse_expression(next_token(p))
         
         {expect(p, :RIGHT_PAREN), %Grouping{expr: expr}}

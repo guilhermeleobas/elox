@@ -4,12 +4,13 @@ defmodule EvalTest do
 
   def test_eval(input) do
     Lexer.tokenize(input)
-    |> Parser.parse
-    |> hd
+    |> Parser.from_tokens
+    |> Parser.parse_expression
+    |> elem(1)
     |> Eval.eval
   end
 
-  test "Test number literal expression" do
+  test "Test literal expression" do
     values = [
       {"2", 2.0},
       {~s("hello"), "\"hello\""},
@@ -28,7 +29,18 @@ defmodule EvalTest do
       {"2 + 3", 5.0},
       {"(5 - (3 - 1)) + -1", 2.0},
       {"!false", true},
-      {"!true", false}
+      {"!true", false},
+      {"2 > 3", false},
+      {"2 >= 3", false},
+      {"2 < 3", true},
+      {"2 < 3", true},
+      {"2 <= 3", true},
+      {"3 == 3", true},
+      {"2 == 3", false},
+      {"2 != 3", true},
+      {"nil == nil", true},
+      {"nil == true", false},
+      {"2 == nil", false},
     ]
     
     Enum.each(values, fn {input, expected} ->
@@ -37,7 +49,7 @@ defmodule EvalTest do
   end
 
   test "eval concatenate strings expr" do
-    assert test_eval(~s("hello" + "world")) == ~s("hello world")
+    assert test_eval(~s("hello" + " world")) == ~s("hello\"\" world")
   end
 
 end
