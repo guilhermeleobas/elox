@@ -37,7 +37,6 @@ defmodule ParserTest do
       {"false", Token.new(type: :FALSE, lexeme: "false")},
       {"this", Token.new(type: :THIS, lexeme: "this")},
       {"nil", Token.new(type: :NIL, lexeme: "nil")},
-      {"counter", Token.new(type: :IDENTIFIER, lexeme: "counter")}
     ]
 
     Enum.each(values, fn {input, output} ->
@@ -114,6 +113,40 @@ defmodule ParserTest do
       assert result == output
     end)
 
+  end
+
+  test "parse assignment" do
+    program = """
+    var a = 2;
+    var b;
+    b = a;
+    """
+
+    tokens = [
+      %Lox.Ast.Stmt{
+        expr: %Lox.Ast.Assign{
+          name: %Token{lexeme: "b", line: -1, type: :IDENTIFIER},
+          value: %Lox.Ast.Literal{
+            token: %Token{lexeme: "a", line: -1, type: :IDENTIFIER}
+          }
+        }
+      },
+      %Lox.Ast.VarDecl{
+        expr: nil,
+        name: %Token{lexeme: "b", line: -1, type: :IDENTIFIER}
+      },
+      %Lox.Ast.VarDecl{
+        expr: %Lox.Ast.Literal{
+          token: %Token{lexeme: "2.0", line: -1, type: :NUMBER}
+        },
+        name: %Token{lexeme: "a", line: -1, type: :IDENTIFIER}
+      }
+    ]
+    
+    assert tokens == 
+    Lexer.tokenize(program)
+    |> Parser.parse
+    
   end
 
 end

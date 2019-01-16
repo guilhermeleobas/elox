@@ -12,6 +12,7 @@ defmodule Parser do
     Stmt,
     PrintStmt,
     VarDecl,
+    Assign,
   }
 
   @enforce_keys [:curr, :peek, :rest, :errors]
@@ -52,6 +53,14 @@ defmodule Parser do
       true
     else
       false
+    end
+  end
+
+  defp consume(%Parser{curr: curr} = p, token_type) do
+    if curr.type == token_type do
+      {next_token(p), curr}
+    else
+      :error
     end
   end
 
@@ -126,21 +135,22 @@ defmodule Parser do
 
   def parse_expression(p) do
     # expression → assignment ;
-    # assignment → IDENTIFIER "=" assignment
-    #            | equality ;
-
     parse_assignment(p)
-
   end
 
   def parse_assignment(p) do
-    
-    if match(p, :IDENTIFIER) do
-      {p, idtn} = {next_token(p) |> expect(:EQUAL), p.curr}
-      # To-do: complete!
+    # assignment → IDENTIFIER "=" assignment
+    #            | equality ;
+
+    {p, expr} = parse_equality(p)
+
+    with {p, _} <- consume(p, :EQUAL) do
+      {p, value} = parse_assignment(p)
+      {p, %Assign{name: expr.token, value: value}}
     else
-      parse_equality(p)
+      :error -> {p, expr}
     end
+
   end
 
   def parse_equality(p) do
@@ -220,7 +230,6 @@ defmodule Parser do
     case op_token.type do
       op when op in [:BANG, :MINUS] ->
         {p, right} = parse_unary(next_token(p))
-        # IO.inspect(p.curr)
         {p, %Unary{token: op_token, operator: op, right: right}}
       _ -> 
         parse_primary(p) # returns {p, literal}. Just propagate

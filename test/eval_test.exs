@@ -48,6 +48,20 @@ defmodule EvalTest do
     end)
   end
 
+  test "eval assignment and print" do
+    program = """
+    var a = 1;
+    var b = 2;
+    print a + b;
+    """
+
+    Lexer.tokenize(program)
+    |> Parser.parse
+    
+    # to-do complete
+    assert false, message: "to-do: Implement logic"
+  end
+
   test "eval concatenate strings expr" do
     assert test_eval(~s("hello" + " world")) == ~s("hello\"\" world")
   end

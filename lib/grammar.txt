@@ -21,5 +21,5 @@ addition       → multiplication ( ( "-" | "+" ) multiplication )* ;
 multiplication → unary ( ( "/" | "*" ) unary )* ;
 unary          → ( "!" | "-" ) unary
                | primary ;
-primary        → NUMBER | STRING | "false" | "true" | "nil"
+primary        → NUMBER | STRING | "false" | "true" | "nil" | IDENTIFIER
                | "(" expression ")" ;
