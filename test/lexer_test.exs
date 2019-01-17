@@ -1,5 +1,8 @@
 defmodule LexerTest do
-  alias Lox.Lexer
+  alias Lox.{
+    Token,
+    Lexer,
+  }
   
   use ExUnit.Case
   doctest Lexer

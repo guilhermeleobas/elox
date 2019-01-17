@@ -8,6 +8,7 @@ defmodule ParserTest do
   }
 
   alias Lox.{
+    Token,
     Lexer,
     Parser,
   }
