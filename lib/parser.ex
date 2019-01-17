@@ -2,7 +2,7 @@ defmodule ParserError do
   defexception message: "Parser Error"
 end
 
-defmodule Parser do
+defmodule Lox.Parser do
 
   alias Lox.Ast.{
     Literal,
@@ -15,30 +15,32 @@ defmodule Parser do
     Assign,
   }
 
+  alias Lox.Token
+
   @enforce_keys [:curr, :peek, :rest, :errors]
   defstruct [:curr, :peek, :rest, :errors]
 
   def from_tokens(tokens) do
     [curr | [peek | rest]] = tokens
-    %Parser{curr: curr, peek: peek, rest: rest, errors: []}
+    %Lox.Parser{curr: curr, peek: peek, rest: rest, errors: []}
   end
 
-  defp next_token(%Parser{rest: []} = p) do
+  defp next_token(%Lox.Parser{rest: []} = p) do
     %{p | curr: p.peek, peek: nil, errors: []}
   end
 
-  defp next_token(%Parser{} = p) do
+  defp next_token(%Lox.Parser{} = p) do
     [h | t] = p.rest
     %{p | curr: p.peek, peek: h, rest: t, errors: []}
   end
 
-  defp add_error(%Parser{} = p, message) do
+  defp add_error(%Lox.Parser{} = p, message) do
     %{p | errors: [message | p.errors]}
   end
 
   # `expect` checks if the current token is the expected one
   # if yes, advance to the next token. Otherwise, throws an error
-  defp expect(%Parser{} = p, token_type) do
+  defp expect(%Lox.Parser{} = p, token_type) do
     if p.curr.type == token_type do
       next_token(p)
     else
@@ -48,7 +50,7 @@ defmodule Parser do
 
   # `match` returns `true` when the current token is the expected one
   # `false` otherwise.
-  defp match(%Parser{curr: curr} = _p, token_type) do
+  defp match(%Lox.Parser{curr: curr} = _p, token_type) do
     if curr.type == token_type do
       true
     else
@@ -56,7 +58,7 @@ defmodule Parser do
     end
   end
 
-  defp consume(%Parser{curr: curr} = p, token_type) do
+  defp consume(%Lox.Parser{curr: curr} = p, token_type) do
     if curr.type == token_type do
       {next_token(p), curr}
     else
@@ -69,7 +71,7 @@ defmodule Parser do
     |> parse_program([])
   end
 
-  def parse_program(%Parser{curr: %Token{type: :EOF}} = _p, stmts) do
+  def parse_program(%Lox.Parser{curr: %Token{type: :EOF}} = _p, stmts) do
     stmts
   end
 

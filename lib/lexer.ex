@@ -2,7 +2,9 @@ defmodule LexerError do
   defexception message: "Lexer error"
 end
 
-defmodule Lexer do
+defmodule Lox.Lexer do
+
+  alias Lox.Token
 
   def error(message) do
     raise message 
@@ -144,12 +146,6 @@ defmodule Lexer do
         tokenize(tl(t), [token | tokens])
     end
   end
-
-  def consume_digits(chars) do
-    {number_arr, rest} = Enum.split_while(chars, &is_digit/1)
-
-  end
-
 
   def number_op(chars, tokens) do
     {number_arr, rest} = Enum.split_while(chars, &is_digit/1)

@@ -7,6 +7,11 @@ defmodule ParserTest do
     VarDecl
   }
 
+  alias Lox.{
+    Lexer,
+    Parser,
+  }
+
   use ExUnit.Case
   doctest Parser
 

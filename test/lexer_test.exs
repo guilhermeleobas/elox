@@ -1,6 +1,9 @@
 defmodule LexerTest do
+  alias Lox.Lexer
+  
   use ExUnit.Case
   doctest Lexer
+
 
   test "single_char_op" do
     assert hd(Lexer.tokenize("+")) == Token.new(type: :PLUS, lexeme: "+")

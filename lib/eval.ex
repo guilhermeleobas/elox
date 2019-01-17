@@ -10,21 +10,19 @@ defmodule Eval do
     Grouping,
     Stmt,
     PrintStmt,
+    VarDecl,
   }
 
-  defp check_number_operands(operator, left, right) do
-    if !(is_number(left) && is_number(right)) do
-      raise EvalError, message: "Operands must be a number on #{operator}"
-    else
-      true
-    end
-  end
+  alias Lox.{
+    Lexer,
+    Parser
+  }
 
-  def eval(%Stmt{} = stmt) do
+  defp eval(%Stmt{} = stmt) do
     eval(stmt.expr)
   end
 
-  def eval(%Binary{} = expr) do
+  defp eval(%Binary{} = expr) do
     left = eval(expr.left)
     right = eval(expr.right)
 
@@ -47,7 +45,7 @@ defmodule Eval do
     end
   end
 
-  def eval(%Unary{} = unary) do
+  defp eval(%Unary{} = unary) do
     right = eval(unary.right)
     case unary.operator do
       :MINUS -> -right
@@ -55,11 +53,11 @@ defmodule Eval do
     end
   end
 
-  def eval(%Grouping{} = grouping) do
+  defp eval(%Grouping{} = grouping) do
     eval(grouping.expr)
   end
 
-  def eval(%Literal{} = literal) do
+  defp eval(%Literal{} = literal) do
     case literal.token.type do
       :NUMBER -> literal.token.lexeme |> Float.parse |> elem(0)
       :STRING -> literal.token.lexeme
@@ -68,5 +66,22 @@ defmodule Eval do
       :NIL -> nil
     end
   end
+
+  defp eval(%VarDecl{} = vardecl) do
+    
+  end
+
+  defp eval(%PrintStmt{} = print_stmt) do
+    eval(print_stmt.expr)
+    |> IO.write
+  end
+
+  def eval_program(program) do
+    Lexer.tokenize(program)
+    |> Parser.parse
+    |> hd
+    |> eval
+  end
+
 
 end

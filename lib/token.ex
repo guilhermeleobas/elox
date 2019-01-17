@@ -1,7 +1,9 @@
-defmodule Token do
+defmodule Lox.Token do
   @doc """
     Encapsulate the notion of a Token
   """
+
+  alias Lox.Token
   
   @enforce_keys [:type, :lexeme]
   defstruct [:type, :lexeme, :line]
@@ -16,8 +18,8 @@ defmodule Token do
   
 end
 
-defimpl String.Chars, for: Token do
-  def to_string(%Token{type: type, lexeme: lexeme} = token) do
+defimpl String.Chars, for: Lox.Token do
+  def to_string(%Lox.Token{type: type, lexeme: lexeme} = token) do
     "#{lexeme}"
   end
 end
