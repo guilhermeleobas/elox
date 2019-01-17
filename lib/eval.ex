@@ -15,17 +15,19 @@ defmodule Eval do
 
   alias Lox.{
     Lexer,
-    Parser
+    Parser,
+    Environment
   }
 
-  defp eval(%Stmt{} = stmt) do
-    eval(stmt.expr)
+  defp eval(%Environment{} = env, %Stmt{} = stmt) do
+    eval(env, stmt.expr)
   end
 
-  defp eval(%Binary{} = expr) do
-    left = eval(expr.left)
-    right = eval(expr.right)
-
+  defp eval(%Environment{} = env, %Binary{} = expr) do
+    {env, left}  = eval(env, expr.left)
+    {env, right} = eval(env, expr.right)
+      
+    result =     
     case expr.operator do
       :STAR -> left * right
       :SLASH -> left / right
@@ -43,21 +45,28 @@ defmodule Eval do
       :EQUAL_EQUAL -> left == right
       :BANG_EQUAL -> left != right
     end
+
+    {env, result}
+
   end
 
-  defp eval(%Unary{} = unary) do
-    right = eval(unary.right)
-    case unary.operator do
-      :MINUS -> -right
-      :BANG -> !right
+  defp eval(%Environment{} = env, %Unary{} = unary) do
+    with {env, right} <- eval(env, unary.right) do
+      result =    
+      case unary.operator do
+        :MINUS -> -right
+        :BANG -> !right
+      end
+      {env, result}
     end
   end
 
-  defp eval(%Grouping{} = grouping) do
-    eval(grouping.expr)
+  defp eval(%Environment{} = env, %Grouping{} = grouping) do
+    eval(env, grouping.expr)
   end
 
-  defp eval(%Literal{} = literal) do
+  defp eval(%Environment{} = env, %Literal{} = literal) do
+    result =
     case literal.token.type do
       :NUMBER -> literal.token.lexeme |> Float.parse |> elem(0)
       :STRING -> literal.token.lexeme
@@ -65,22 +74,34 @@ defmodule Eval do
       :TRUE -> true
       :NIL -> nil
     end
+    {env, result}
   end
 
-  defp eval(%VarDecl{} = vardecl) do
-    
+  defp eval(%Environment{} = env, %VarDecl{} = var) do
+    lexeme = var.name.lexeme
+    {env, value} = eval(env, var.expr)
+    lexeme = var.name.lexeme
+    env = Environment.put(env, lexeme, value)
+    {env, nil}
   end
 
-  defp eval(%PrintStmt{} = print_stmt) do
-    eval(print_stmt.expr)
+  defp eval(%Environment{} = env, %PrintStmt{} = print_stmt) do
+    {env, result} = eval(env, print_stmt.expr)
+
+    result
     |> IO.write
+
+    {env, nil}
   end
 
   def eval_program(program) do
-    Lexer.tokenize(program)
+    env = Environment.new()
+
+    p = Lexer.tokenize(program)
     |> Parser.parse
     |> hd
-    |> eval
+    
+    eval(env, p)
   end
 
 

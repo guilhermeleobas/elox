@@ -16,7 +16,7 @@ defmodule EnvironmentTest do
   end
 
   test "Environment: put" do
-    var = Token.new(type: :STRING, lexeme: "a")
+    var = "a"
     value = 2.0
 
     env =
@@ -27,7 +27,7 @@ defmodule EnvironmentTest do
   end
 
   test "Environment: get" do
-    var = Token.new(type: :STRING, lexeme: "a")
+    var = "a"
     value = 2.0
 
     gv = 
@@ -46,5 +46,16 @@ defmodule EnvironmentTest do
       |> Environment.get(var)
     end
 
+  end
+
+  test "Environment: contains" do
+    var = "a"
+    value = 2.0
+
+    env = 
+    Environment.new()
+    |> Environment.put(var, value)
+
+    assert Environment.contains(env, var) == true
   end
 end

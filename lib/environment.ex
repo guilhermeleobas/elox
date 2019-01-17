@@ -31,15 +31,19 @@ defmodule Lox.Environment do
     %Environment{map: outer.map}
   end
 
-  def get(%Environment{} = env, %Token{} = var) do
-    case Map.get(env.map, var.lexeme) do
-      nil -> raise EnvironmentError, message: "Undefined variable: '#{var.lexeme}'"
+  def get(%Environment{} = env, var) do
+    case Map.get(env.map, var) do
+      nil -> raise EnvironmentError, message: "Undefined variable: '#{var}'"
       value -> value
     end
   end
 
-  def put(%Environment{} = env, %Token{} = var, value) do
-    Map.put(env.map, var.lexeme, value)
+  def contains(%Environment{} = env, var) do
+    Map.has_key?(env.map, var)
+  end
+
+  def put(%Environment{} = env, var, value) do
+    Map.put(env.map, var, value)
     |> from_map
   end
 

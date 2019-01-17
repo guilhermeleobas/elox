@@ -1,6 +1,8 @@
 defmodule EvalTest do
   use ExUnit.Case
 
+  alias Lox.Environment
+
   import ExUnit.CaptureIO
   
   doctest Eval
@@ -18,7 +20,7 @@ defmodule EvalTest do
       output = 
       Eval.eval_program(input)
 
-      assert output == expected, message: "Eval Literal"
+      assert elem(output, 1) == expected, message: "Eval Literal"
     end)
   end
 
@@ -45,7 +47,7 @@ defmodule EvalTest do
     Enum.each(values, fn {input, expected} ->
       output = Eval.eval_program(input)
 
-      assert output == expected
+      assert elem(output, 1) == expected
     end)
   end
 
@@ -56,10 +58,10 @@ defmodule EvalTest do
       {"print \"one\";", "\"one\""},
     ]
 
-    Enum.each(values, fn {input, output} ->
+    Enum.each(values, fn {input, expected} ->
       assert capture_io(fn ->
         Eval.eval_program(input)
-      end) == output
+      end) == expected
     end)
 
   end
@@ -77,22 +79,24 @@ defmodule EvalTest do
       {"\"one\";", "\"one\""},
     ]
 
-    Enum.each(values, fn {input, output} ->
-      assert Eval.eval_program(input) == output
+    Enum.each(values, fn {input, expected} ->
+      output = Eval.eval_program(input)
+      assert elem(output, 1) == expected
     end)
 
   end
 
   test "eval VarDecl" do
     values = [
-      {"var a = 2;", "2.0"},
+      {"var a = 2;", "a", 2.0},
     ]
-    
-    Enum.each(values, fn {input, output} ->
-      assert capture_io(fn ->
-        Eval.eval_program(input)
-      end) == output
+
+    Enum.each(values, fn {input, var, value} ->
+      {env, _} = Eval.eval_program(input)
+      assert Environment.contains(env, var) == true
+      assert Environment.get(env, var) == value
     end)
+    
   end
 
 end
