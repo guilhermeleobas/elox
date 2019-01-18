@@ -48,7 +48,6 @@ defmodule LexerTest do
 
   @tag :invalid
   test "invalid digit" do
-    # assert_raise LexerError, Lexer.tokenize("1234.")
     assert_raise LexerError, "Error creating token for number 1234.", fn -> 
       Lexer.tokenize("1234.")
     end

@@ -72,7 +72,7 @@ defmodule Lox.Parser do
   end
 
   def parse_program(%Lox.Parser{curr: %Token{type: :EOF}} = _p, stmts) do
-    stmts
+    stmts |> Enum.reverse
   end
 
   def parse_program(p, stmts) do
@@ -148,7 +148,7 @@ defmodule Lox.Parser do
 
     with {p, _} <- consume(p, :EQUAL) do
       {p, value} = parse_assignment(p)
-      {p, %Assign{name: expr.token, value: value}}
+      {p, %Assign{name: expr.token, expr: value}}
     else
       :error -> {p, expr}
     end

@@ -20,7 +20,7 @@ defmodule EvalTest do
       output = 
       Eval.eval_program(input)
 
-      assert elem(output, 1) == expected, message: "Eval Literal"
+      assert elem(output, 1) == [expected], message: "Eval Literal"
     end)
   end
 
@@ -47,7 +47,7 @@ defmodule EvalTest do
     Enum.each(values, fn {input, expected} ->
       output = Eval.eval_program(input)
 
-      assert elem(output, 1) == expected
+      assert elem(output, 1) == [expected]
     end)
   end
 
@@ -67,7 +67,31 @@ defmodule EvalTest do
   end
 
   test "Eval Assign" do
-    assert false, message: "to-do eval Assign"
+    values = [
+      {"var a; a = 2;", 
+        %{"a" => 2}
+      },
+      {"var a; var b; var c; a = 2; b = 3; c = 4;", 
+        %{"a" => 2.0, "b" => 3.0, "c" => 4.0}
+      },
+    ]
+
+    Enum.each(values, fn {input, map} ->
+      {env, _} = Eval.eval_program(input)
+      assert env.map == map
+    end)
+  end
+
+  test "Eval Undefined Assign" do
+    values = [
+      {"a = 2;", "a"}, 
+      {"var a = 3; b = 3;", "b"},
+    ]
+    Enum.each(values, fn {input, var} ->
+      assert_raise EvalError, "Undefined variable #{var}", fn -> 
+        Eval.eval_program(input)
+      end
+    end)
   end
 
   test "Eval Stmt" do
@@ -81,7 +105,7 @@ defmodule EvalTest do
 
     Enum.each(values, fn {input, expected} ->
       output = Eval.eval_program(input)
-      assert elem(output, 1) == expected
+      assert elem(output, 1) == [expected]
     end)
 
   end
@@ -89,6 +113,7 @@ defmodule EvalTest do
   test "eval VarDecl" do
     values = [
       {"var a = 2;", "a", 2.0},
+      {"var a = 2; var b = 3;", "b", 3.0},
     ]
 
     Enum.each(values, fn {input, var, value} ->

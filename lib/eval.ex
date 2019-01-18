@@ -11,12 +11,13 @@ defmodule Eval do
     Stmt,
     PrintStmt,
     VarDecl,
+    Assign,
   }
 
   alias Lox.{
     Lexer,
     Parser,
-    Environment
+    Environment,
   }
 
   defp eval(%Environment{} = env, %Stmt{} = stmt) do
@@ -79,10 +80,30 @@ defmodule Eval do
 
   defp eval(%Environment{} = env, %VarDecl{} = var) do
     lexeme = var.name.lexeme
-    {env, value} = eval(env, var.expr)
-    lexeme = var.name.lexeme
+    
+    {env, value} =
+      if var.expr != nil do
+        eval(env, var.expr)
+      else
+        {env, nil}
+      end
+
     env = Environment.put(env, lexeme, value)
     {env, nil}
+  end
+
+  defp eval(%Environment{} = env, %Assign{} = assign) do
+
+    lexeme = assign.name.lexeme
+    {env, value} = eval(env, assign.expr)
+
+    with true <- Environment.contains(env, lexeme) do
+      env = Environment.put(env, lexeme, value)
+      {env, nil}
+    else
+      _ -> raise EvalError, message: "Undefined variable #{lexeme}"
+    end
+
   end
 
   defp eval(%Environment{} = env, %PrintStmt{} = print_stmt) do
@@ -97,11 +118,16 @@ defmodule Eval do
   def eval_program(program) do
     env = Environment.new()
 
-    p = Lexer.tokenize(program)
+    {values, env} = 
+    Lexer.tokenize(program)
     |> Parser.parse
-    |> hd
-    
-    eval(env, p)
+    |> Enum.flat_map_reduce(env, fn stmt, env -> 
+      {env, value} = eval(env, stmt)
+      {[value], env} 
+    end)
+
+    {env, values}
+
   end
 
 

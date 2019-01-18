@@ -92,23 +92,24 @@ defmodule ParserTest do
                 }]
       },
       {"print 2 + 3; print true ;", 
-        [%Lox.Ast.PrintStmt{
-          expr: %Lox.Ast.Literal{
-            token: %Token{lexeme: "true", line: -1, type: :TRUE},
-          }
-        },
-        %Lox.Ast.PrintStmt{
-          expr: %Lox.Ast.Binary{
-            left: %Lox.Ast.Literal{
-              token: %Token{lexeme: "2.0", line: -1, type: :NUMBER},
-            },
-            operator: :PLUS,
-            right: %Lox.Ast.Literal{
-              token: %Token{lexeme: "3.0", line: -1, type: :NUMBER},
-            },
-            token: %Token{lexeme: "+", line: -1, type: :PLUS}
-          }
-        }
+        [
+          %Lox.Ast.PrintStmt{
+            expr: %Lox.Ast.Binary{
+              left: %Lox.Ast.Literal{
+                token: %Token{lexeme: "2.0", line: -1, type: :NUMBER},
+              },
+              operator: :PLUS,
+              right: %Lox.Ast.Literal{
+                token: %Token{lexeme: "3.0", line: -1, type: :NUMBER},
+              },
+              token: %Token{lexeme: "+", line: -1, type: :PLUS}
+            }
+          },
+          %Lox.Ast.PrintStmt{
+            expr: %Lox.Ast.Literal{
+              token: %Token{lexeme: "true", line: -1, type: :TRUE},
+            }
+          },
       ]}
     ]
 
@@ -129,24 +130,24 @@ defmodule ParserTest do
     """
 
     tokens = [
-      %Lox.Ast.Stmt{
-        expr: %Lox.Ast.Assign{
-          name: %Token{lexeme: "b", line: -1, type: :IDENTIFIER},
-          value: %Lox.Ast.Literal{
-            token: %Token{lexeme: "a", line: -1, type: :IDENTIFIER}
-          }
-        }
-      },
-      %Lox.Ast.VarDecl{
-        expr: nil,
-        name: %Token{lexeme: "b", line: -1, type: :IDENTIFIER}
-      },
       %Lox.Ast.VarDecl{
         expr: %Lox.Ast.Literal{
           token: %Token{lexeme: "2.0", line: -1, type: :NUMBER}
         },
         name: %Token{lexeme: "a", line: -1, type: :IDENTIFIER}
-      }
+      },
+      %Lox.Ast.VarDecl{
+        expr: nil,
+        name: %Token{lexeme: "b", line: -1, type: :IDENTIFIER}
+      },
+      %Lox.Ast.Stmt{
+        expr: %Lox.Ast.Assign{
+          name: %Token{lexeme: "b", line: -1, type: :IDENTIFIER},
+          expr: %Lox.Ast.Literal{
+            token: %Token{lexeme: "a", line: -1, type: :IDENTIFIER}
+          }
+        }
+      },
     ]
     
     assert tokens == 
