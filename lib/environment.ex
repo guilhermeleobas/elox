@@ -16,12 +16,7 @@ defmodule Lox.Environment do
     If :map is not specified, the environment is initialized
     with an empty map.
   """
-  
   defstruct [:map]
-
-  defp from_map(%{} = map) do
-    %Environment{map: map}
-  end
 
   def new() do
     %Environment{map: %{}}
@@ -43,8 +38,7 @@ defmodule Lox.Environment do
   end
 
   def put(%Environment{} = env, var, value) do
-    Map.put(env.map, var, value)
-    |> from_map
+    %Environment{map: Map.put(env.map, var, value)}
   end
 
 end

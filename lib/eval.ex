@@ -74,6 +74,7 @@ defmodule Eval do
       :FALSE -> false
       :TRUE -> true
       :NIL -> nil
+      :IDENTIFIER -> Environment.get(env, literal.token.lexeme)
     end
     {env, result}
   end

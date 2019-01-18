@@ -74,6 +74,9 @@ defmodule EvalTest do
       {"var a; var b; var c; a = 2; b = 3; c = 4;", 
         %{"a" => 2.0, "b" => 3.0, "c" => 4.0}
       },
+      {"var a = 2; var b; b = a; var c = b;",
+        %{"a" => 2.0, "b" => 2.0, "c" => 2.0}
+      }
     ]
 
     Enum.each(values, fn {input, map} ->

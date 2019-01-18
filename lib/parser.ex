@@ -40,26 +40,28 @@ defmodule Lox.Parser do
 
   # `expect` checks if the current token is the expected one
   # if yes, advance to the next token. Otherwise, throws an error
-  defp expect(%Lox.Parser{} = p, token_type) do
-    if p.curr.type == token_type do
+  defp expect(%Lox.Parser{} = p, expected_type) do
+    if p.curr.type == expected_type do
       next_token(p)
     else
-      raise ParserError, message: "Expected #{token_type} but got:\n curr: #{p.curr} \n peek: #{p.peek}"
+      raise ParserError, message: "Expected #{expected_type} but got:\n curr: #{p.curr} \n peek: #{p.peek}"
     end
   end
 
   # `match` returns `true` when the current token is the expected one
   # `false` otherwise.
-  defp match(%Lox.Parser{curr: curr} = _p, token_type) do
-    if curr.type == token_type do
+  defp match(%Lox.Parser{curr: curr} = _p, expected_type) do
+    if curr.type == expected_type do
       true
     else
       false
     end
   end
 
-  defp consume(%Lox.Parser{curr: curr} = p, token_type) do
-    if curr.type == token_type do
+  # `consume` consumes the current token if it's type is
+  # equals to the expected one. Otherwise, just return `:error`
+  defp consume(%Lox.Parser{curr: curr} = p, expected_type) do
+    if curr.type == expected_type do
       {next_token(p), curr}
     else
       :error
@@ -87,10 +89,12 @@ defmodule Lox.Parser do
     # declaration → varDecl
     #             | statement ;
 
-    cond do
-      match(p, :VAR) -> parse_var_decl(p)
-      true -> parse_statement(p)  
+    if match(p, :VAR) do
+      parse_var_decl(p)
+    else
+      parse_statement(p)
     end
+
   end
 
   def parse_var_decl(p) do
@@ -112,11 +116,24 @@ defmodule Lox.Parser do
   def parse_statement(p) do
     # statement → exprStmt
     #           | printStmt ;
+    #           | block ;
 
     cond do
       match(p, :PRINT) -> parse_print_statement(p)
+      match(p, :LEFT_BRACE) -> parse_block(p)
       true -> parse_expr_statement(p)
     end
+
+  end
+
+  def parse_block(p) do
+    # block → "{" declaration* "}" ;
+
+    p = expect(p, :LEFT_BRACE)
+
+    # TO-DO
+
+    # parse_declaration(p)
 
   end
 
