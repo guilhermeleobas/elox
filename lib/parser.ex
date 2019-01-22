@@ -14,6 +14,7 @@ defmodule Lox.Parser do
     VarDecl,
     Assign,
     Block,
+    If,
   }
 
   alias Lox.Token
@@ -116,12 +117,14 @@ defmodule Lox.Parser do
 
   def parse_statement(p) do
     # statement → exprStmt
+    #           | ifStmt
     #           | printStmt ;
     #           | block ;
 
     cond do
       match(p, :PRINT) -> parse_print_statement(p)
       match(p, :LEFT_BRACE) -> parse_block(p)
+      match(p, :IF) -> parse_if_stmt(p)
       true -> parse_expr_statement(p)
     end
 
@@ -134,6 +137,31 @@ defmodule Lox.Parser do
       {p, decl} = parse_declaration(p)
       parse_block(p, [decl | stmt_list])
     end
+  end
+
+  def parse_if_stmt(p) do
+    # ifStmt    → "if" "(" expression ")" statement ( "else" statement )? ;
+
+    {p, cond_expr, then_stmt, else_stmt} =
+    with p <- expect(p, :IF),
+         p <- expect(p, :LEFT_PAREN) do
+      {p, cond_expr} = 
+      parse_expression(p)
+
+      {p, then_stmt} = parse_statement(expect(p, :RIGHT_PAREN))
+
+      {p, else_stmt} =
+      if match(p, :ELSE) do
+        parse_statement(next_token(p))
+      else
+        {p, nil}
+      end
+
+      {p, cond_expr, then_stmt, else_stmt}
+    end
+
+    {p, %If{cond_expr: cond_expr, then_stmt: then_stmt, else_stmt: else_stmt}}
+
   end
 
   def parse_block(p) do

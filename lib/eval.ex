@@ -13,6 +13,7 @@ defmodule Eval do
     VarDecl,
     Assign,
     Block,
+    If,
   }
 
   alias Lox.{
@@ -125,6 +126,17 @@ defmodule Eval do
       inner_env
     end)
     {outer, nil}
+  end
+
+  defp eval(%Environment{} = env, %If{} = if_stmt) do
+    {env, c} = eval(env, if_stmt.cond_expr)
+
+    cond do
+      c == false && if_stmt.else_stmt != nil ->
+        eval(env, if_stmt.else_stmt)
+      true -> 
+        eval(env, if_stmt.then_stmt)
+    end
   end
 
   def eval_program(program) do

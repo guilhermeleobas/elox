@@ -172,6 +172,32 @@ defmodule EvalTest do
     assert capture_io(fn ->
       Eval.eval_program(program_2)
     end) == output_2
+
+    program_3 = """
+    var a = 2.0;
+    {
+      var b = 3.0;
+      print a < b;
+    }
+    """
+
+    assert capture_io(fn ->
+      Eval.eval_program(program_3)
+    end) == "true"
+  end
+
+  test "eval if/else" do
+    program = """
+    var a = -2.0;
+    if (a > 1)
+      print "a > 1";
+    else
+      print "a < 1";
+    """
+
+    assert capture_io(fn ->
+      Eval.eval_program(program)
+    end) == "\"a < 1\""
   end
 
 end
