@@ -13,6 +13,7 @@ defmodule Lox.Parser do
     PrintStmt,
     VarDecl,
     Assign,
+    Block,
   }
 
   alias Lox.Token
@@ -126,14 +127,21 @@ defmodule Lox.Parser do
 
   end
 
+  def parse_block(p, stmt_list) do
+    if p.curr.type == :RIGHT_BRACE do
+      {p, stmt_list |> Enum.reverse}
+    else
+      {p, decl} = parse_declaration(p)
+      parse_block(p, [decl | stmt_list])
+    end
+  end
+
   def parse_block(p) do
     # block → "{" declaration* "}" ;
 
     p = expect(p, :LEFT_BRACE)
-
-    # TO-DO
-
-    # parse_declaration(p)
+    {p, stmt_list} = parse_block(p, [])
+    {expect(p, :RIGHT_BRACE), %Block{stmt_list: stmt_list}}
 
   end
 

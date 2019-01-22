@@ -12,6 +12,7 @@ defmodule Eval do
     PrintStmt,
     VarDecl,
     Assign,
+    Block,
   }
 
   alias Lox.{
@@ -114,6 +115,16 @@ defmodule Eval do
     |> IO.write
 
     {env, nil}
+  end
+
+  defp eval(%Environment{} = env, %Block{} = block) do
+    outer = env;
+
+    Enum.reduce(block.stmt_list, env, fn stmt, inner_env ->
+      {inner_env, _} = eval(inner_env, stmt)
+      inner_env
+    end)
+    {outer, nil}
   end
 
   def eval_program(program) do

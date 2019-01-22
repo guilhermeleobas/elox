@@ -127,4 +127,51 @@ defmodule EvalTest do
     
   end
 
+  test "eval Block" do
+    program = """
+    var a = "global a";
+    var b = "global b";
+    var c = "global c";
+    {
+      var a = "outer a";
+      var b = "outer b";
+      {
+        var a = "inner a";
+        print a;
+        print b;
+        print c;
+      }
+      print a;
+      print b;
+      print c;
+    }
+    print a;
+    print b;
+    print c;
+    """
+
+    output = """
+    "inner a""outer b""global c""outer a""outer b""global c""global a""global b""global c"
+    """ |> String.trim
+
+    assert capture_io(fn ->
+      Eval.eval_program(program)
+    end) == output
+
+
+    program_2 = """
+    var global = "outside";
+    {
+      var local = "inside";
+      print global + local;
+    }
+    """
+
+    output_2 = "\"outside\"\"inside\""
+
+    assert capture_io(fn ->
+      Eval.eval_program(program_2)
+    end) == output_2
+  end
+
 end

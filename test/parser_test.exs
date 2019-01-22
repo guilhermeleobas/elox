@@ -156,4 +156,28 @@ defmodule ParserTest do
     
   end
 
+  test "parse block" do
+    program = """
+    {
+      var a = "Hello World!";
+    }
+    """
+
+    tokens = [
+      %Lox.Ast.Block{
+        stmt_list: [%Lox.Ast.VarDecl{
+          expr: %Lox.Ast.Literal{
+            token: %Lox.Token{lexeme: "\"Hello World!\"", line: -1, type: :STRING}
+          },
+          name: %Lox.Token{lexeme: "a", line: -1, type: :IDENTIFIER}
+        }]
+      }
+    ]
+
+    assert tokens == 
+    Lexer.tokenize(program)
+    |> Parser.parse
+
+  end
+
 end
