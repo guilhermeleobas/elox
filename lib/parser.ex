@@ -15,6 +15,7 @@ defmodule Lox.Parser do
     Assign,
     Block,
     If,
+    Logical,
   }
 
   alias Lox.Token
@@ -70,6 +71,8 @@ defmodule Lox.Parser do
     end
   end
 
+  ###############################################################################################
+
   def parse(tokens) do
     from_tokens(tokens)
     |> parse_program([])
@@ -87,6 +90,8 @@ defmodule Lox.Parser do
     parse_program(p, [stmt | stmts])
   end
 
+  ###############################################################################################
+
   def parse_declaration(p) do
     # declaration → varDecl
     #             | statement ;
@@ -98,6 +103,8 @@ defmodule Lox.Parser do
     end
 
   end
+
+  ###############################################################################################
 
   def parse_var_decl(p) do
     # varDecl → "var" IDENTIFIER ( "=" expression )? ";" ;
@@ -115,6 +122,8 @@ defmodule Lox.Parser do
     {expect(p, :SEMICOLON), %VarDecl{name: idtn, expr: expr}}
   end
 
+  ###############################################################################################
+
   def parse_statement(p) do
     # statement → exprStmt
     #           | ifStmt
@@ -130,14 +139,7 @@ defmodule Lox.Parser do
 
   end
 
-  def parse_block(p, stmt_list) do
-    if p.curr.type == :RIGHT_BRACE do
-      {p, stmt_list |> Enum.reverse}
-    else
-      {p, decl} = parse_declaration(p)
-      parse_block(p, [decl | stmt_list])
-    end
-  end
+  ###############################################################################################
 
   def parse_if_stmt(p) do
     # ifStmt    → "if" "(" expression ")" statement ( "else" statement )? ;
@@ -164,6 +166,17 @@ defmodule Lox.Parser do
 
   end
 
+  ###############################################################################################
+
+  def parse_block(p, stmt_list) do
+    if match(p, :RIGHT_BRACE) do
+      {p, stmt_list |> Enum.reverse}
+    else
+      {p, decl} = parse_declaration(p)
+      parse_block(p, [decl | stmt_list])
+    end
+  end
+
   def parse_block(p) do
     # block → "{" declaration* "}" ;
 
@@ -173,12 +186,16 @@ defmodule Lox.Parser do
 
   end
 
+  ###############################################################################################
+
   def parse_expr_statement(p) do
     # exprStmt  → expression ";" ;
 
     {p, expr} = parse_expression(p);
     {expect(p, :SEMICOLON), %Stmt{expr: expr}}
   end
+
+  ###############################################################################################
 
   def parse_print_statement(p) do
     # printStmt → "print" expression ";" ;
@@ -188,25 +205,51 @@ defmodule Lox.Parser do
     {expect(p, :SEMICOLON), %PrintStmt{expr: expr}}
   end
 
+  ###############################################################################################
+
   def parse_expression(p) do
     # expression → assignment ;
     parse_assignment(p)
   end
 
+  ###############################################################################################
+
   def parse_assignment(p) do
-    # assignment → IDENTIFIER "=" assignment
+    # assignment → identifier "=" assignment
+    #            | logic
     #            | equality ;
 
-    {p, expr} = parse_equality(p)
+    {p, left} = parse_equality(p)
 
-    with {p, _} <- consume(p, :EQUAL) do
-      {p, value} = parse_assignment(p)
-      {p, %Assign{name: expr.token, expr: value}}
-    else
-      :error -> {p, expr}
+    cond do
+      match(p, :EQUAL) ->
+        {p, value} = parse_assignment(next_token(p))
+        {p, %Assign{name: left.token, expr: value}}
+      match(p, :AND) || match(p, :OR) ->
+        parse_logic(p, left)
+      true -> 
+        {p, left}
     end
 
   end
+
+  ###############################################################################################
+
+  def parse_logic(p, left) do
+    # logic   → equality ( ( "or" | "and" ) logic )* ;
+
+    # left = equality
+    cond do
+      match(p, :OR) || match(p, :AND) ->
+        operator = p.curr.type
+        {p, right} = parse_logic(next_token(p), nil)
+        {p, %Logical{left: left, operator: operator, right: right}}
+      true ->
+        parse_equality(p)
+    end
+  end
+  
+  ###############################################################################################
 
   def parse_equality(p) do
     # equality → comparison ( ( "!=" | "==" ) comparison )* ;
@@ -226,6 +269,8 @@ defmodule Lox.Parser do
 
   end
 
+  ###############################################################################################
+
   def parse_comparison(p) do
     # comparison → addition ( ( ">" | ">=" | "<" | "<=" ) addition )* ;
 
@@ -242,6 +287,8 @@ defmodule Lox.Parser do
         {add_error(p, msg), left}
     end
   end
+
+  ###############################################################################################
 
   def parse_addition(p) do
     # addition → multiplication ( ( "-" | "+" ) multiplication )* ;
@@ -260,6 +307,8 @@ defmodule Lox.Parser do
     end
   end
 
+  ###############################################################################################
+
   def parse_multiplication(p) do
     # multiplication → unary ( ( "/" | "*" ) unary )* ;
     
@@ -277,6 +326,8 @@ defmodule Lox.Parser do
     end
   end
 
+  ###############################################################################################
+
   def parse_unary(p) do
     # unary → ( "!" | "-" ) unary
     #         | primary ;
@@ -290,6 +341,8 @@ defmodule Lox.Parser do
         parse_primary(p) # returns {p, literal}. Just propagate
     end
   end
+
+  ###############################################################################################
 
   def parse_primary(p) do
     # primary → NUMBER | STRING | "false" | "true" | "nil" | "this" | IDENTIFIER

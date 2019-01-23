@@ -18,8 +18,11 @@ exprStmt  → expression ";" ;
 printStmt → "print" expression ";" ;
 
 expression → assignment ;
-assignment → IDENTIFIER "=" assignment
-           | equality ;
+assignment → identifier "=" assignment
+           | equality
+           | logic ;
+
+logic   → equality ( ( "or" | "and" ) logic )* ;
 
 equality       → comparison ( ( "!=" | "==" ) comparison )* ;
 comparison     → addition ( ( ">" | ">=" | "<" | "<=" ) addition )* ;

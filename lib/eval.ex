@@ -14,6 +14,7 @@ defmodule Eval do
     Assign,
     Block,
     If,
+    Logical,
   }
 
   alias Lox.{
@@ -118,6 +119,15 @@ defmodule Eval do
     {env, nil}
   end
 
+  defp eval(%Environment{} = env, %Logical{} = logical) do
+    case logical.operator do
+      :AND -> 
+        eval(env, logical.left) && eval(env, logical.right)
+      :OR ->
+        eval(env, logical.left) || eval(env, logical.right)
+    end
+  end
+
   defp eval(%Environment{} = env, %Block{} = block) do
     outer = env;
 
@@ -145,6 +155,7 @@ defmodule Eval do
     {values, env} = 
     Lexer.tokenize(program)
     |> Parser.parse
+    |> IO.inspect
     |> Enum.flat_map_reduce(env, fn stmt, env -> 
       {env, value} = eval(env, stmt)
       {[value], env} 

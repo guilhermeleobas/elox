@@ -200,4 +200,14 @@ defmodule EvalTest do
     end) == "\"a < 1\""
   end
 
+  test "parse and" do
+    program = """
+    //print "hi" or 2;
+    //print nil or "yes";
+    print 2 and 3;
+    """
+
+    Eval.eval_program(program)
+  end
+
 end
