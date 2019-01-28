@@ -122,9 +122,19 @@ defmodule Eval do
   defp eval(%Environment{} = env, %Logical{} = logical) do
     case logical.operator do
       :AND -> 
-        eval(env, logical.left) && eval(env, logical.right)
+        {env, value} = eval(env, logical.left)
+        if is_truthy(value) != true do
+          {env, value}
+        else
+          eval(env, logical.right)
+        end
       :OR ->
-        eval(env, logical.left) || eval(env, logical.right)
+        {env, value} = eval(env, logical.left)
+        if is_truthy(value) == true do
+          {env, value}
+        else
+          eval(env, logical.right)
+        end
     end
   end
 
@@ -148,6 +158,17 @@ defmodule Eval do
         eval(env, if_stmt.then_stmt)
     end
   end
+  
+  defp is_truthy(value) do
+    cond do
+      is_nil(value) -> 
+        false
+      is_boolean(value) ->
+        value
+      true ->
+        true
+    end
+  end
 
   def eval_program(program) do
     env = Environment.new()
@@ -155,7 +176,6 @@ defmodule Eval do
     {values, env} = 
     Lexer.tokenize(program)
     |> Parser.parse
-    |> IO.inspect
     |> Enum.flat_map_reduce(env, fn stmt, env -> 
       {env, value} = eval(env, stmt)
       {[value], env} 

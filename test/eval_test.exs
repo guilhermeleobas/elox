@@ -202,12 +202,14 @@ defmodule EvalTest do
 
   test "parse and" do
     program = """
-    //print "hi" or 2;
-    //print nil or "yes";
+    print "hi" or 2;
+    print nil or "yes";
     print 2 and 3;
     """
 
-    Eval.eval_program(program)
+    assert capture_io(fn -> 
+      Eval.eval_program(program)
+    end) == "\"hi\"\"yes\"3.0"
   end
 
 end
