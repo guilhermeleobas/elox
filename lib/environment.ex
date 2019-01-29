@@ -16,29 +16,68 @@ defmodule Lox.Environment do
     If :map is not specified, the environment is initialized
     with an empty map.
   """
-  defstruct [:map]
+  defstruct [:outer, :inner]
 
   def new() do
-    %Environment{map: %{}}
+    %Environment{outer: nil, inner: %{}}
   end
 
   def new(%Environment{} = outer) do
-    %Environment{map: outer.map}
+    %Environment{outer: outer, inner: %{}}
+  end
+
+  ############################
+
+  def get(nil, var) do
+    raise EnvironmentError, message: "Undefined variable: '#{var}'"
   end
 
   def get(%Environment{} = env, var) do
-    case Map.get(env.map, var) do
-      nil -> raise EnvironmentError, message: "Undefined variable: '#{var}'"
+    case Map.get(env.inner, var) do
+      nil -> get(env.outer, var)
       value -> value
     end
   end
 
-  def contains(%Environment{} = env, var) do
-    Map.has_key?(env.map, var)
+  ############################
+
+  def contains(nil, _var) do
+    false
   end
 
+  def contains(%Environment{} = env, var) do
+    case Map.has_key?(env.inner, var) do
+      true -> 
+        true
+      false ->
+        contains(env.outer, var)
+    end
+  end
+
+  ############################
+
+  def update(nil, var, _value) do
+    raise EnvironmentError, message: "Undefined variable: '#{var}'"
+  end
+
+  def update(%Environment{} = env, var, value) do
+    case Map.has_key?(env.inner, var) do
+      true ->
+        %Environment{inner: Map.put(env.inner, var, value), outer: env.outer}
+      false ->
+        outer = update(env.outer, var, value)
+        %Environment{inner: env.inner, outer: outer}
+    end
+  end
+
+  ############################
+
   def put(%Environment{} = env, var, value) do
-    %Environment{map: Map.put(env.map, var, value)}
+    %Environment{inner: Map.put(env.inner, var, value), outer: env.outer}
   end
 
 end
+
+
+
+

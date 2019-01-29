@@ -7,12 +7,12 @@ defmodule EnvironmentTest do
   use ExUnit.Case
 
   test "Environment: create" do
-    assert Environment.new() == %Environment{map: %{}}
+    assert Environment.new() == %Environment{outer: nil, inner: %{}}
   end
 
   test "Environment: create with outer scope" do
-    outer = %Environment{map: %{"a" => 2, "b" => 3}}
-    assert Environment.new(outer) == %Environment{map: %{"a" => 2, "b" => 3}}
+    outer = %Environment{outer: nil, inner: %{"a" => 2, "b" => 3}}
+    assert Environment.new(outer) == %Environment{outer: outer, inner: %{}}
   end
 
   test "Environment: put" do
@@ -23,7 +23,7 @@ defmodule EnvironmentTest do
     Environment.new()
     |> Environment.put(var, value)
 
-    assert env == %Environment{map: %{"a" => 2}}
+    assert env == %Environment{outer: nil, inner: %{"a" => 2}}
   end
 
   test "Environment: get" do

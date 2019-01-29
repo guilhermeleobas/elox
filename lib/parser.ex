@@ -16,29 +16,26 @@ defmodule Lox.Parser do
     Block,
     If,
     Logical,
+    While,
   }
 
   alias Lox.Token
 
-  @enforce_keys [:curr, :peek, :rest, :errors]
-  defstruct [:curr, :peek, :rest, :errors]
+  @enforce_keys [:curr, :peek, :rest]
+  defstruct [:curr, :peek, :rest]
 
   def from_tokens(tokens) do
     [curr | [peek | rest]] = tokens
-    %Lox.Parser{curr: curr, peek: peek, rest: rest, errors: []}
+    %Lox.Parser{curr: curr, peek: peek, rest: rest}
   end
 
   defp next_token(%Lox.Parser{rest: []} = p) do
-    %{p | curr: p.peek, peek: nil, errors: []}
+    %{p | curr: p.peek, peek: nil}
   end
 
   defp next_token(%Lox.Parser{} = p) do
     [h | t] = p.rest
-    %{p | curr: p.peek, peek: h, rest: t, errors: []}
-  end
-
-  defp add_error(%Lox.Parser{} = p, message) do
-    %{p | errors: [message | p.errors]}
+    %{p | curr: p.peek, peek: h, rest: t}
   end
 
   # `expect` checks if the current token is the expected one
@@ -126,15 +123,101 @@ defmodule Lox.Parser do
 
   def parse_statement(p) do
     # statement → exprStmt
+    #           | forStmt
     #           | ifStmt
-    #           | printStmt ;
+    #           | printStmt 
+    #           | whileStmt
     #           | block ;
 
     cond do
-      match(p, :PRINT) -> parse_print_statement(p)
-      match(p, :LEFT_BRACE) -> parse_block(p)
-      match(p, :IF) -> parse_if_stmt(p)
-      true -> parse_expr_statement(p)
+      match(p, :PRINT) -> 
+        parse_print_statement(p)
+      match(p, :FOR) ->
+        parse_for_statement(p)
+      match(p, :LEFT_BRACE) -> 
+        parse_block(p)
+      match(p, :IF) -> 
+        parse_if_stmt(p)
+      match(p, :WHILE) ->
+        parse_while_stmt(p)
+      true -> 
+        parse_expr_statement(p)
+    end
+
+  end
+
+  ###############################################################################################
+
+  defp append_or_create_block(body, nil), do: body
+  defp append_or_create_block(%Block{stmt_list: stmts} = _body, inc), do: %Block{stmt_list: 
+    [ stmts, inc ] |> List.flatten }
+  defp append_or_create_block(body, inc), do: %Block{stmt_list: [body, inc]}
+
+  def parse_for_statement(p) do
+    # forStmt   → "for" "(" ( varDecl | exprStmt | ";" )
+    #                    expression? ";"
+    #                    expression? ")" statement ; 
+
+    with p <- expect(p, :FOR),
+         p <- expect(p, :LEFT_PAREN) do
+
+      {p, initializer} =
+      cond do
+        match(p, :SEMICOLON) -> {expect(p, :SEMICOLON), nil}
+        match(p, :VAR) -> parse_var_decl(p)
+        true -> parse_expr_statement(p)
+      end
+
+      {p, cond_expr} = 
+      cond do
+        # if the condition is nil, we replace it by a always true expression
+        match(p, :SEMICOLON) -> {p, %Literal{token: Token.new(type: :TRUE, lexeme: "true")}}
+        true -> parse_expression(p)
+      end
+
+      p = expect(p, :SEMICOLON)
+
+      {p, increment} = 
+      if !match(p, :RIGHT_PAREN) do
+        parse_expression(p)
+      else
+        {p, nil}
+      end
+
+      p = expect(p, :RIGHT_PAREN)
+
+      #
+      # initializer
+      # while (cond)
+      #   body
+      #   increment
+      # 
+      # We create a block for the body + increment
+      {p, body} = parse_statement(p)
+      body = append_or_create_block(body, increment) 
+
+      while = %While{cond_expr: cond_expr, stmt_body: body}
+
+      if initializer == nil do
+        {p, %Block{stmt_list: [while]}}
+      else
+        {p, %Block{stmt_list: [initializer, while]}}
+      end
+
+    end
+  end
+
+  ###############################################################################################
+  
+  def parse_while_stmt(p) do
+    # whileStmt → "while" "(" expression ")" statement ;
+    with p <- expect(p, :WHILE),
+         p <- expect(p, :LEFT_PAREN) do
+      
+      {p, cond_expr} = parse_expression(p)
+      {p, stmt_body} = parse_statement(expect(p, :RIGHT_PAREN))
+
+      {p, %While{cond_expr: cond_expr, stmt_body: stmt_body}}
     end
 
   end
@@ -263,8 +346,7 @@ defmodule Lox.Parser do
 
         {p, %Binary{token: op_token, left: left, operator: op, right: right}}
       _ -> 
-        msg = "Expected != or == but got #{p.curr}"
-        {add_error(p, msg), left}
+        {p, left}
     end
 
   end
@@ -283,8 +365,7 @@ defmodule Lox.Parser do
 
         {p, %Binary{token: op_token, left: left, operator: op, right: right}}
       _ -> 
-        msg = "Expected >, >=, <, <= but got #{p.curr}"
-        {add_error(p, msg), left}
+        {p, left}
     end
   end
 
@@ -302,8 +383,7 @@ defmodule Lox.Parser do
 
         {p, %Binary{token: op_token, left: left, operator: op, right: right}}
       _ -> 
-        msg = "Expected - or + but got #{p.curr}"
-        {add_error(p, msg), left}
+        {p, left}
     end
   end
 
@@ -321,8 +401,7 @@ defmodule Lox.Parser do
 
         {p, %Binary{token: op_token, left: left, operator: op, right: right}}
       _ -> 
-        msg = "Expected / or * but got #{p.curr}"
-        {add_error(p, msg), left}
+        {p, left}
     end
   end
 

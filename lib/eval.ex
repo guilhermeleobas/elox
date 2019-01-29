@@ -15,6 +15,7 @@ defmodule Eval do
     Block,
     If,
     Logical,
+    While,
   }
 
   alias Lox.{
@@ -102,8 +103,8 @@ defmodule Eval do
     {env, value} = eval(env, assign.expr)
 
     with true <- Environment.contains(env, lexeme) do
-      env = Environment.put(env, lexeme, value)
-      {env, nil}
+      env = Environment.update(env, lexeme, value)
+      {env, value}
     else
       _ -> raise EvalError, message: "Undefined variable #{lexeme}"
     end
@@ -139,13 +140,24 @@ defmodule Eval do
   end
 
   defp eval(%Environment{} = env, %Block{} = block) do
-    outer = env;
 
-    Enum.reduce(block.stmt_list, env, fn stmt, inner_env ->
+    env = 
+    Enum.reduce(block.stmt_list, Environment.new(env), fn stmt, inner_env ->
       {inner_env, _} = eval(inner_env, stmt)
-      inner_env
+      inner_env 
     end)
-    {outer, nil}
+
+    {env.outer, nil}
+  end
+
+  defp eval(%Environment{} = env, %While{} = while) do
+    {env, value} = eval(env, while.cond_expr)
+    if is_truthy(value) do
+      {env, _} = eval(env, while.stmt_body)
+      eval(env, while)
+    else
+      {env, nil} 
+    end
   end
 
   defp eval(%Environment{} = env, %If{} = if_stmt) do

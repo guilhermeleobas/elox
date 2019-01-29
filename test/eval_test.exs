@@ -81,7 +81,7 @@ defmodule EvalTest do
 
     Enum.each(values, fn {input, map} ->
       {env, _} = Eval.eval_program(input)
-      assert env.map == map
+      assert env.inner == map
     end)
   end
 
@@ -200,7 +200,7 @@ defmodule EvalTest do
     end) == "\"a < 1\""
   end
 
-  test "parse and" do
+  test "eval and" do
     program = """
     print "hi" or 2;
     print nil or "yes";
@@ -210,6 +210,22 @@ defmodule EvalTest do
     assert capture_io(fn -> 
       Eval.eval_program(program)
     end) == "\"hi\"\"yes\"3.0"
+  end
+
+  test "eval while syntax" do
+    {:ok, program} = File.read('test/lox/while_syntax.lox')
+
+    assert capture_io(fn ->
+      Eval.eval_program(program)
+    end) == "1.02.03.00.01.02.0"
+  end
+
+  test "eval for syntax" do
+    {:ok, program} = File.read('test/lox/for_syntax.lox')
+
+    assert capture_io(fn ->
+      Eval.eval_program(program)
+    end) == "1.02.03.00.01.02.015.0"
   end
 
 end

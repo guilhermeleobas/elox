@@ -6,7 +6,13 @@ declaration → varDecl
 statement   → exprStmt
             | ifStmt
             | printStmt 
-            | block
+            | whileStmt
+            | forStmt
+            | block ;
+
+forStmt   → "for" "(" ( varDecl | exprStmt | ";" )
+                      expression? ";"
+                      expression? ")" statement ;
 
 block → "{" declaration* "}" ;
 
@@ -16,6 +22,8 @@ varDecl → "var" IDENTIFIER ( "=" expression )? ";" ;
 
 exprStmt  → expression ";" ;
 printStmt → "print" expression ";" ;
+
+whileStmt → "while" "(" expression ")" statement ;
 
 expression → assignment ;
 assignment → identifier "=" assignment
@@ -32,3 +40,16 @@ unary          → ( "!" | "-" ) unary
                | primary ;
 primary        → NUMBER | STRING | "false" | "true" | "nil" | IDENTIFIER
                | "(" expression ")" ;
+               
+               
+expression → literal
+           | unary
+           | binary
+           | grouping ;
+
+literal    → NUMBER | STRING | "false" | "true" | "nil" | IDENTIFIER;
+grouping   → "(" expression ")" ;
+unary      → ( "-" | "!" ) expression ;
+binary     → expression operator expression ;
+operator   → "==" | "!=" | "<" | "<=" | ">" | ">="
+           | "+"  | "-"  | "*" | "/" ;
