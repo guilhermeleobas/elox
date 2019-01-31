@@ -180,4 +180,137 @@ defmodule ParserTest do
 
   end
 
+  test "parse curry function call " do
+    program = """
+    average(1, 2)(3, 4)()("abc", 7); 
+    """
+
+    tokens = [
+      %Lox.Ast.Stmt{
+        expr: %Lox.Ast.Call{
+          args: [
+            %Lox.Ast.Literal{
+              token: %Lox.Token{lexeme: "\"abc\"", line: -1, type: :STRING}
+            },
+            %Lox.Ast.Literal{
+              token: %Lox.Token{lexeme: "7.0", line: -1, type: :NUMBER}
+            }
+          ],
+          callee: %Lox.Ast.Call{
+            args: [],
+            callee: %Lox.Ast.Call{
+              args: [
+                %Lox.Ast.Literal{
+                  token: %Lox.Token{lexeme: "3.0", line: -1, type: :NUMBER}
+                },
+                %Lox.Ast.Literal{
+                  token: %Lox.Token{lexeme: "4.0", line: -1, type: :NUMBER}
+                }
+              ],
+              callee: %Lox.Ast.Call{
+                args: [
+                  %Lox.Ast.Literal{
+                    token: %Lox.Token{lexeme: "1.0", line: -1, type: :NUMBER}
+                  },
+                  %Lox.Ast.Literal{
+                    token: %Lox.Token{lexeme: "2.0", line: -1, type: :NUMBER}
+                  }
+                ],
+                callee: %Lox.Ast.Literal{
+                  token: %Lox.Token{lexeme: "average", line: -1, type: :IDENTIFIER}
+                }
+              }
+            }
+          }
+        }
+      }
+    ]
+
+    assert tokens ==
+    Lexer.tokenize(program)
+    |> Parser.parse
+
+  end
+
+  test "parse function call with more than 8 arguments" do
+    
+    program = "average(1, 2, 3, 4, 5, 6, 7, 8, 9);"
+
+    assert_raise ParserError, "Function call to 'average' with more than 8 arguments", fn -> 
+      Lexer.tokenize(program)
+      |> Parser.parse
+    end
+  end
+
+  test "parse function declaration" do
+    program = """
+    fun sum(a, b, c){
+      var d = (a + b) + c;
+      return d;
+    }
+    """
+
+    tokens = [
+      %Lox.Ast.Function{
+        args: [
+          %Lox.Token{lexeme: "a", line: -1, type: :IDENTIFIER},
+          %Lox.Token{lexeme: "b", line: -1, type: :IDENTIFIER},
+          %Lox.Token{lexeme: "c", line: -1, type: :IDENTIFIER}
+        ],
+        body: %Lox.Ast.Block{
+          stmt_list: [
+            %Lox.Ast.VarDecl{
+              expr: %Lox.Ast.Binary{
+                left: %Lox.Ast.Grouping{
+                  expr: %Lox.Ast.Binary{
+                    left: %Lox.Ast.Literal{
+                      token: %Lox.Token{lexeme: "a", line: -1, type: :IDENTIFIER}
+                    },
+                    operator: :PLUS,
+                    right: %Lox.Ast.Literal{
+                      token: %Lox.Token{lexeme: "b", line: -1, type: :IDENTIFIER}
+                    },
+                    token: %Lox.Token{lexeme: "+", line: -1, type: :PLUS}
+                  }
+                },
+                operator: :PLUS,
+                right: %Lox.Ast.Literal{
+                  token: %Lox.Token{lexeme: "c", line: -1, type: :IDENTIFIER}
+                },
+                token: %Lox.Token{lexeme: "+", line: -1, type: :PLUS}
+              },
+              name: %Lox.Token{lexeme: "d", line: -1, type: :IDENTIFIER}
+            },
+            %Lox.Ast.Return{
+              expr: %Lox.Ast.Literal{
+                token: %Lox.Token{lexeme: "d", line: -1, type: :IDENTIFIER}
+              },
+              keyword: %Lox.Token{lexeme: "return", line: -1, type: :RETURN}
+            }
+          ]
+        },
+        name: %Lox.Token{lexeme: "sum", line: -1, type: :IDENTIFIER}
+      }
+    ]
+
+    assert tokens = 
+    Lexer.tokenize(program)
+    |> Parser.parse
+    
+  end
+
+  test "parse function with more than 8 arguments" do
+    program = """
+    fun sum(a, b, c, d, e, f, g, h, i, j, k, l){
+      return a;
+    }
+    """
+
+    assert_raise ParserError, "Function 'sum' declared with more than 8 arguments", fn ->
+      Lexer.tokenize(program)
+      |> Parser.parse
+    end
+
+  end
+
 end

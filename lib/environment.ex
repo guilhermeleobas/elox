@@ -10,11 +10,11 @@ defmodule Lox.Environment do
   }
 
   @moduledoc """
-    With :map one can specify a map for the outer scope
+    With :outer one can specify a map for the outer scope
     that the inner scope can inherit.
 
-    If :map is not specified, the environment is initialized
-    with an empty map.
+    If :outer is not specified, :outer is initialized with nil
+    and :inner with an empty map 
   """
   defstruct [:outer, :inner]
 

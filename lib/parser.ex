@@ -17,6 +17,9 @@ defmodule Lox.Parser do
     If,
     Logical,
     While,
+    Call,
+    Function,
+    Return,
   }
 
   alias Lox.Token
@@ -91,13 +94,64 @@ defmodule Lox.Parser do
 
   def parse_declaration(p) do
     # declaration → varDecl
+    #             | funDecl
     #             | statement ;
 
-    if match(p, :VAR) do
-      parse_var_decl(p)
-    else
-      parse_statement(p)
+    cond do
+      match(p, :VAR) -> parse_var_decl(p)
+      match(p, :FUN) -> parse_function_decl(p)
+      true -> parse_statement(p)
     end
+
+  end
+
+
+  ###############################################################################################
+
+  def parse_return_stmt(p) do
+    # returnStmt → "return" expression? ";" ;
+    {p, ret_keyword} = consume(p, :RETURN)
+
+    if match(p, :SEMICOLON) do
+      {p, nil}
+    else
+      {p, expr} = parse_expression(p)
+      {expect(p, :SEMICOLON), %Return{keyword: ret_keyword, expr: expr}}
+    end
+  end
+
+  def parse_func_decl_arguments(p) do
+    # parameters → IDENTIFIER ( "," IDENTIFIER )* ;
+    cond do
+      match(p, :COMMA) ->
+        parse_func_decl_arguments(next_token(p))
+      match(p, :RIGHT_PAREN) ->
+        {p, []}
+      match(p, :IDENTIFIER) ->
+        {p, idtn} = consume(p, :IDENTIFIER)
+        {p, rest} = parse_func_decl_arguments(p)
+        {p, [idtn | rest]}
+      true ->
+        raise ParserError, message: "Expected :IDENTIFIER/:COMMA/:RIGHT_PAREN but got #{p.curr}"
+    end
+
+  end
+
+  def parse_function_decl(p) do
+    # funDecl  → "fun" function ;
+    # function → IDENTIFIER "(" parameters? ")" block ;
+
+    p = expect(p, :FUN)
+    {p, name} = {expect(p, :IDENTIFIER), p.curr}
+    p = expect(p, :LEFT_PAREN)
+    {p, args} = parse_func_decl_arguments(p)
+    p = expect(p, :RIGHT_PAREN)
+    {p, body} = parse_block(p)
+
+    if (length args) > 8 do
+      raise ParserError, message: "Function '#{name}' declared with more than 8 arguments"
+    end
+    {p, %Function{name: name, args: args, body: body}}
 
   end
 
@@ -126,6 +180,7 @@ defmodule Lox.Parser do
     #           | forStmt
     #           | ifStmt
     #           | printStmt 
+    #           | returnStmt
     #           | whileStmt
     #           | block ;
 
@@ -134,6 +189,8 @@ defmodule Lox.Parser do
         parse_print_statement(p)
       match(p, :FOR) ->
         parse_for_statement(p)
+      match(p, :RETURN) ->
+        parse_return_stmt(p)
       match(p, :LEFT_BRACE) -> 
         parse_block(p)
       match(p, :IF) -> 
@@ -409,7 +466,7 @@ defmodule Lox.Parser do
 
   def parse_unary(p) do
     # unary → ( "!" | "-" ) unary
-    #         | primary ;
+    #         | call ;
 
     op_token = p.curr
     case op_token.type do
@@ -417,8 +474,61 @@ defmodule Lox.Parser do
         {p, right} = parse_unary(next_token(p))
         {p, %Unary{token: op_token, operator: op, right: right}}
       _ -> 
-        parse_primary(p) # returns {p, literal}. Just propagate
+        parse_call(p) # returns {p, literal}. Just propagate
     end
+  end
+
+  ###############################################################################################
+
+
+  def parse_func_call_arguments(p) do
+    # arguments → expression ( "," expression )* ;
+    cond do
+      match(p, :COMMA) ->
+        parse_func_call_arguments(next_token(p))
+      match(p, :RIGHT_PAREN) ->
+        {next_token(p), []}
+      true ->
+        {p, arg} = parse_expression(p)
+        {p, rest} = parse_func_call_arguments(p)
+        {p, [arg | rest]}
+    end
+  end
+
+  def parse_call(p, function_name, calls_args) do
+    cond do
+      match(p, :SEMICOLON) ->
+        {p, calls_args}
+      match(p, :LEFT_PAREN) ->
+        {p, args} = parse_func_call_arguments(next_token(p))
+        if (length args) > 8 do
+          raise ParserError, message: "Function call to '#{function_name}' with more than 8 arguments"
+        end
+        parse_call(p, function_name, calls_args ++ [args])
+      true ->
+        raise ParserError, message: "Expected :SEMICOLON or :LEFT_PAREN but got #{p.curr}" 
+    end
+  end
+
+  def parse_call(p) do
+    # call  → primary ( "(" arguments? ")" )* ;
+
+    {p, function_name} = parse_primary(p)
+
+    if match(p, :LEFT_PAREN) do
+      {p, call_args} = parse_call(p, function_name, [])
+
+      call = 
+      Enum.reduce(call_args, function_name, fn args, acc ->
+        %Call{callee: acc, args: args}
+      end)
+
+      {p, call}
+    else
+      {p, function_name}
+    end
+
+
   end
 
   ###############################################################################################

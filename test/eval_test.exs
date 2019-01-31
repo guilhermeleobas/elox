@@ -225,7 +225,9 @@ defmodule EvalTest do
 
     assert capture_io(fn ->
       Eval.eval_program(program)
-    end) == "1.02.03.00.01.02.015.0"
+    end) == "1.02.03.00.01.02.015.00.01.00.01.0"
   end
+
+
 
 end

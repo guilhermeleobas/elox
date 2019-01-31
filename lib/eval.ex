@@ -184,6 +184,7 @@ defmodule Eval do
 
   def eval_program(program) do
     env = Environment.new()
+    gloals = Environment.new()
 
     {values, env} = 
     Lexer.tokenize(program)
