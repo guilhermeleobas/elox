@@ -15,7 +15,9 @@ defmodule Eval do
     Block,
     If,
     Logical,
-    While
+    While,
+    Function,
+    Call
   }
 
   alias Lox.{
@@ -23,11 +25,15 @@ defmodule Eval do
     Parser,
     Environment
   }
+  
+  ###############################################################################################
 
   defp eval(%Environment{} = env, %Stmt{} = stmt) do
     eval(env, stmt.expr)
   end
 
+  ###############################################################################################
+  
   defp eval(%Environment{} = env, %Binary{} = expr) do
     {env, left} = eval(env, expr.left)
     {env, right} = eval(env, expr.right)
@@ -71,6 +77,8 @@ defmodule Eval do
 
     {env, result}
   end
+  
+  ###############################################################################################
 
   defp eval(%Environment{} = env, %Unary{} = unary) do
     with {env, right} <- eval(env, unary.right) do
@@ -84,9 +92,13 @@ defmodule Eval do
     end
   end
 
+  ###############################################################################################
+  
   defp eval(%Environment{} = env, %Grouping{} = grouping) do
     eval(env, grouping.expr)
   end
+  
+  ###############################################################################################
 
   defp eval(%Environment{} = env, %Literal{} = literal) do
     result =
@@ -102,6 +114,8 @@ defmodule Eval do
     {env, result}
   end
 
+  ###############################################################################################
+  
   defp eval(%Environment{} = env, %VarDecl{} = var) do
     lexeme = var.name.lexeme
 
@@ -115,6 +129,8 @@ defmodule Eval do
     env = Environment.put(env, lexeme, value)
     {env, nil}
   end
+  
+  ###############################################################################################
 
   defp eval(%Environment{} = env, %Assign{} = assign) do
     lexeme = assign.name.lexeme
@@ -127,6 +143,8 @@ defmodule Eval do
       _ -> raise EvalError, message: "Undefined variable #{lexeme}"
     end
   end
+  
+  ###############################################################################################
 
   defp eval(%Environment{} = env, %PrintStmt{} = print_stmt) do
     {env, result} = eval(env, print_stmt.expr)
@@ -136,6 +154,8 @@ defmodule Eval do
 
     {env, nil}
   end
+  
+  ###############################################################################################
 
   defp eval(%Environment{} = env, %Logical{} = logical) do
     case logical.operator do
@@ -158,6 +178,8 @@ defmodule Eval do
         end
     end
   end
+  
+  ###############################################################################################
 
   defp eval(%Environment{} = env, %Block{} = block) do
     env =
@@ -168,6 +190,8 @@ defmodule Eval do
 
     {env.outer, nil}
   end
+  
+  ###############################################################################################
 
   defp eval(%Environment{} = env, %While{} = while) do
     {env, value} = eval(env, while.cond_expr)
@@ -179,6 +203,8 @@ defmodule Eval do
       {env, nil}
     end
   end
+  
+  ###############################################################################################
 
   defp eval(%Environment{} = env, %If{} = if_stmt) do
     {env, c} = eval(env, if_stmt.cond_expr)
@@ -191,6 +217,20 @@ defmodule Eval do
         eval(env, if_stmt.then_stmt)
     end
   end
+  
+  ###############################################################################################
+
+  defp eval(%Environment{} = env, %Function{} = function) do
+    
+  end
+  
+  ###############################################################################################
+  
+  defp eval(%Environment{} = env, %Call{} = call) do
+
+  end
+
+  ###############################################################################################
 
   defp is_truthy(value) do
     cond do
@@ -204,10 +244,12 @@ defmodule Eval do
         true
     end
   end
+  
+  ###############################################################################################
 
   def eval_program(program) do
     env = Environment.new()
-    gloals = Environment.new()
+    globals = Environment.new()
 
     {values, env} =
       Lexer.tokenize(program)

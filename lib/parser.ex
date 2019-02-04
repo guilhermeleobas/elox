@@ -111,7 +111,7 @@ defmodule Lox.Parser do
     {p, ret_keyword} = consume(p, :RETURN)
 
     if match(p, :SEMICOLON) do
-      {p, nil}
+      {expect(p, :SEMICOLON), nil}
     else
       {p, expr} = parse_expression(p)
       {expect(p, :SEMICOLON), %Return{keyword: ret_keyword, expr: expr}}
@@ -234,8 +234,10 @@ defmodule Lox.Parser do
       {p, cond_expr} =
         cond do
           # if the condition is nil, we replace it by a always true expression
-          match(p, :SEMICOLON) -> {p, %Literal{token: Token.new(type: :TRUE, lexeme: "true")}}
-          true -> parse_expression(p)
+          match(p, :SEMICOLON) -> 
+            {p, %Literal{token: Token.new(type: :TRUE, lexeme: "true")}}
+          true -> 
+            parse_expression(p)
         end
 
       p = expect(p, :SEMICOLON)

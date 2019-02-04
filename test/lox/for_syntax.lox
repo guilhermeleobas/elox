@@ -26,6 +26,17 @@ for (; i < 2; i = i + 1) print i;
 // expect: 0
 // expect: 1
 
+// No condition.
+fun bar() {
+  for (var i = 0;; i = i + 1) {
+    print i;
+    if (i >= 2) return;
+  }
+}
+bar();
+// expect: 0
+// expect: 1
+// expect: 2
 
 // No increment.
 for (var i = 0; i < 2;) {
