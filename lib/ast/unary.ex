@@ -1,5 +1,4 @@
 defmodule Lox.Ast.Unary do
-
   @enforce_keys [:token, :operator, :right]
   defstruct [:token, :operator, :right]
 
@@ -10,5 +9,4 @@ defmodule Lox.Ast.Unary do
       "(#{op} #{right})"
     end
   end
-  
 end

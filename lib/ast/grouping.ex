@@ -1,5 +1,4 @@
 defmodule Lox.Ast.Grouping do
-
   @enforce_keys [:expr]
   defstruct [:expr]
 
@@ -9,5 +8,4 @@ defmodule Lox.Ast.Grouping do
       "(group #{str})"
     end
   end
-
 end

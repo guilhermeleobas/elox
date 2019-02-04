@@ -12,5 +12,4 @@ defmodule Lox.Ast.Binary do
       "(#{op} #{left} #{right})"
     end
   end
-  
 end

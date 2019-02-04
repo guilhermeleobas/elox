@@ -1,5 +1,4 @@
 defmodule Lox.Ast.If do
-
   @enforce_keys [:cond_expr, :then_stmt, :else_stmt]
   defstruct [:cond_expr, :then_stmt, :else_stmt]
 
@@ -8,5 +7,4 @@ defmodule Lox.Ast.If do
       "if"
     end
   end
-  
 end

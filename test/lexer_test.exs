@@ -1,19 +1,18 @@
 defmodule LexerTest do
   alias Lox.{
     Token,
-    Lexer,
+    Lexer
   }
-  
+
   use ExUnit.Case
   doctest Lexer
-
 
   test "single_char_op" do
     assert hd(Lexer.tokenize("+")) == Token.new(type: :PLUS, lexeme: "+")
   end
 
   test "identifier" do
-    token = Lexer.tokenize("abc") 
+    token = Lexer.tokenize("abc")
     assert hd(token) == Token.new(type: :IDENTIFIER, lexeme: "abc")
   end
 
@@ -37,7 +36,7 @@ defmodule LexerTest do
   end
 
   test "digit" do
-    token = "12.34" |> Lexer.tokenize
+    token = "12.34" |> Lexer.tokenize()
     assert hd(token) == Token.new(type: :NUMBER, lexeme: "12.34")
   end
 
@@ -48,48 +47,48 @@ defmodule LexerTest do
 
   @tag :invalid
   test "invalid digit" do
-    assert_raise LexerError, "Error creating token for number 1234.", fn -> 
+    assert_raise LexerError, "Error creating token for number 1234.", fn ->
       Lexer.tokenize("1234.")
     end
   end
 
   test "quotation mark" do
-    assert Lexer.is_quote ("\"")
+    assert Lexer.is_quote("\"")
     assert Lexer.is_quote("h") == false
   end
 
   test "string tokenize" do
-    token = "\"hello world\"" |> Lexer.tokenize
+    token = "\"hello world\"" |> Lexer.tokenize()
     assert hd(token) == Token.new(type: :STRING, lexeme: "\"hello world\"")
   end
 
   test "empty string" do
-    token = ~s(" ") |> Lexer.tokenize
+    token = ~s(" ") |> Lexer.tokenize()
     assert hd(token) == Token.new(type: :STRING, lexeme: ~s(" "))
   end
 
   test "equal equal" do
-    token = "==" |> Lexer.tokenize
+    token = "==" |> Lexer.tokenize()
     assert hd(token) == Token.new(type: :EQUAL_EQUAL, lexeme: "==")
   end
 
   test "equal" do
-    token = "=" |> Lexer.tokenize
+    token = "=" |> Lexer.tokenize()
     assert hd(token) == Token.new(type: :EQUAL, lexeme: "=")
   end
 
   test "bang" do
-    token = "!" |> Lexer.tokenize
+    token = "!" |> Lexer.tokenize()
     assert hd(token) == Token.new(type: :BANG, lexeme: "!")
   end
 
   test "bang equal" do
-    token = "!=" |> Lexer.tokenize
+    token = "!=" |> Lexer.tokenize()
     assert hd(token) == Token.new(type: :BANG_EQUAL, lexeme: "!=")
   end
 
   test "less equal" do
-    token = "<=" |> Lexer.tokenize
+    token = "<=" |> Lexer.tokenize()
     assert hd(token) == Token.new(type: :LESS_EQUAL, lexeme: "<=")
   end
 
@@ -102,25 +101,25 @@ defmodule LexerTest do
     program = "// this is a comment
 (( )){} // grouping stuff
 !*+-/=<> <= == // operators"
-    assert Lexer.tokenize(program) == [
-      %Token{lexeme: "(", line: -1, type: :LEFT_PAREN},
-      %Token{lexeme: "(", line: -1, type: :LEFT_PAREN},
-      %Token{lexeme: ")", line: -1, type: :RIGHT_PAREN},
-      %Token{lexeme: ")", line: -1, type: :RIGHT_PAREN},
-      %Token{lexeme: "{", line: -1, type: :LEFT_BRACE},
-      %Token{lexeme: "}", line: -1, type: :RIGHT_BRACE},
-      %Token{lexeme: "!", line: -1, type: :BANG},
-      %Token{lexeme: "*", line: -1, type: :STAR},
-      %Token{lexeme: "+", line: -1, type: :PLUS},
-      %Token{lexeme: "-", line: -1, type: :MINUS},
-      %Token{lexeme: "/", line: -1, type: :SLASH},
-      %Token{lexeme: "=", line: -1, type: :EQUAL},
-      %Token{lexeme: "<", line: -1, type: :LESS},
-      %Token{lexeme: ">", line: -1, type: :GREATER},
-      %Token{lexeme: "<=", line: -1, type: :LESS_EQUAL},
-      %Token{lexeme: "==", line: -1, type: :EQUAL_EQUAL},
-      %Token{lexeme: "", line: -1, type: :EOF}
-    ]
-  end
 
+    assert Lexer.tokenize(program) == [
+             %Token{lexeme: "(", line: -1, type: :LEFT_PAREN},
+             %Token{lexeme: "(", line: -1, type: :LEFT_PAREN},
+             %Token{lexeme: ")", line: -1, type: :RIGHT_PAREN},
+             %Token{lexeme: ")", line: -1, type: :RIGHT_PAREN},
+             %Token{lexeme: "{", line: -1, type: :LEFT_BRACE},
+             %Token{lexeme: "}", line: -1, type: :RIGHT_BRACE},
+             %Token{lexeme: "!", line: -1, type: :BANG},
+             %Token{lexeme: "*", line: -1, type: :STAR},
+             %Token{lexeme: "+", line: -1, type: :PLUS},
+             %Token{lexeme: "-", line: -1, type: :MINUS},
+             %Token{lexeme: "/", line: -1, type: :SLASH},
+             %Token{lexeme: "=", line: -1, type: :EQUAL},
+             %Token{lexeme: "<", line: -1, type: :LESS},
+             %Token{lexeme: ">", line: -1, type: :GREATER},
+             %Token{lexeme: "<=", line: -1, type: :LESS_EQUAL},
+             %Token{lexeme: "==", line: -1, type: :EQUAL_EQUAL},
+             %Token{lexeme: "", line: -1, type: :EOF}
+           ]
+  end
 end

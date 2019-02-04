@@ -1,5 +1,4 @@
 defmodule Lox.Ast.PrintStmt do
-
   @enforce_keys [:expr]
   defstruct [:expr]
 
@@ -9,5 +8,4 @@ defmodule Lox.Ast.PrintStmt do
       "print #{str}"
     end
   end
-  
 end

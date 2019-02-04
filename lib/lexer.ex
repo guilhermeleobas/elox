@@ -3,11 +3,10 @@ defmodule LexerError do
 end
 
 defmodule Lox.Lexer do
-
   alias Lox.Token
 
   def error(message) do
-    raise message 
+    raise message
   end
 
   def is_digit(c) do
@@ -15,9 +14,7 @@ defmodule Lox.Lexer do
   end
 
   def is_alpha(c) do
-    (c >= "a" && c <= "z") || 
-    (c >= "A" && c <= "Z") ||
-    (c == "_")
+    (c >= "a" && c <= "z") || (c >= "A" && c <= "Z") || c == "_"
   end
 
   def is_quote(c) do
@@ -32,15 +29,19 @@ defmodule Lox.Lexer do
     # we already know that h is a slash
     case hd(t) do
       "/" ->
-        {comment, rest} = Enum.split_while(chars, fn(x) -> !is_endline(x) end)
+        {comment, rest} = Enum.split_while(chars, fn x -> !is_endline(x) end)
+
         cond do
-          rest == [] -> 
+          rest == [] ->
             tokenize([], tokens)
-          hd(rest) == "\n" -> 
+
+          hd(rest) == "\n" ->
             tokenize(tl(rest), tokens)
-          true -> 
+
+          true ->
             tokenize(rest, tokens)
         end
+
       _ ->
         token = Token.new(type: :SLASH, lexeme: h)
         tokenize(t, [token | tokens])
@@ -48,7 +49,7 @@ defmodule Lox.Lexer do
   end
 
   def single_char_op(_chars = [char | rest], tokens) do
-    token = 
+    token =
       case char do
         "(" -> Token.new(type: :LEFT_PAREN, lexeme: char)
         ")" -> Token.new(type: :RIGHT_PAREN, lexeme: char)
@@ -60,10 +61,11 @@ defmodule Lox.Lexer do
         "+" -> Token.new(type: :PLUS, lexeme: char)
         ";" -> Token.new(type: :SEMICOLON, lexeme: char)
         "*" -> Token.new(type: :STAR, lexeme: char)
-         _  -> raise LexerError, message: "Lexer Error: Unexpected char #{char}"
+        _ -> raise LexerError, message: "Lexer Error: Unexpected char #{char}"
       end
 
-    tokenize(rest, [token | tokens]) # remember to do a reverse in the end
+    # remember to do a reverse in the end
+    tokenize(rest, [token | tokens])
   end
 
   def get_identifier_type(lexeme) do
@@ -83,7 +85,7 @@ defmodule Lox.Lexer do
       "this" => :THIS,
       "true" => :TRUE,
       "var" => :VAR,
-      "while" => :WHILE,
+      "while" => :WHILE
     }
 
     # tries to match the lexeme against the reserved
@@ -93,7 +95,7 @@ defmodule Lox.Lexer do
 
   def identifier_op(chars, tokens) do
     {identifier, rest} = Enum.split_while(chars, &is_alpha/1)
-    identifier = Enum.join(identifier) 
+    identifier = Enum.join(identifier)
 
     type = get_identifier_type(identifier)
     token = Token.new(type: type, lexeme: identifier)
@@ -104,44 +106,50 @@ defmodule Lox.Lexer do
     # h is "
     # t is the rest of the string
     # Let's consume the string until we find another quotation mark
-    {identifier, rest} = Enum.split_while(t, fn(x) -> !is_quote(x) end)
+    {identifier, rest} = Enum.split_while(t, fn x -> !is_quote(x) end)
     identifier = Enum.join(identifier)
     token = Token.new(type: :STRING, lexeme: "\"#{identifier}\"")
     tokenize(tl(rest), [token | tokens])
   end
 
   def can_be_double_char(c) do
-    (c == "=") || (c == "!") || (c == "<") || (c == ">")
+    c == "=" || c == "!" || c == "<" || c == ">"
   end
 
   def double_char_op(_chars = [h | t], tokens) do
-    token = 
+    token =
       case h do
-        "=" when hd(t) == "=" -> 
+        "=" when hd(t) == "=" ->
           Token.new(type: :EQUAL_EQUAL, lexeme: "==")
-        "=" -> 
+
+        "=" ->
           Token.new(type: :EQUAL, lexeme: "=")
 
-        "!" when hd(t) == "=" -> 
+        "!" when hd(t) == "=" ->
           Token.new(type: :BANG_EQUAL, lexeme: "!=")
+
         "!" ->
           Token.new(type: :BANG, lexeme: "!")
 
-        "<" when hd(t) == "=" -> 
+        "<" when hd(t) == "=" ->
           Token.new(type: :LESS_EQUAL, lexeme: "<=")
+
         "<" ->
           Token.new(type: :LESS, lexeme: "<")
 
         ">" when hd(t) == "=" ->
           Token.new(type: :GREATER_EQUAL, lexeme: ">=")
+
         ">" ->
           Token.new(type: :GREATER, lexeme: ">")
       end
 
     type = token.type
+
     case type do
       type when type in [:EQUAL, :BANG, :LESS, :GREATER] ->
         tokenize(t, [token | tokens])
+
       _ ->
         tokenize(tl(t), [token | tokens])
     end
@@ -151,19 +159,23 @@ defmodule Lox.Lexer do
     {number_arr, rest} = Enum.split_while(chars, &is_digit/1)
 
     # Check if we have a dot on hd(rest)
-    {number_arr, rest} = 
-      # Here we use List.first instead of hd because rest can be an
-      # empty list and if it is, we match on the last condition ( _ -> ... ).
+    # Here we use List.first instead of hd because rest can be an
+    # empty list and if it is, we match on the last condition ( _ -> ... ).
+    {number_arr, rest} =
       case List.first(rest) do
-        "." -> 
+        "." ->
           {frac_arr, rest2} = Enum.split_while(tl(rest), &is_digit/1)
+
           case frac_arr do
-            [] -> 
+            [] ->
               number = Enum.join(number_arr) <> "."
               raise LexerError, message: "Error creating token for number #{number}"
-            _ -> {number_arr ++ ["."] ++ frac_arr, rest2}
+
+            _ ->
+              {number_arr ++ ["."] ++ frac_arr, rest2}
           end
-        _ -> 
+
+        _ ->
           {number_arr ++ [".0"], rest}
       end
 
@@ -178,8 +190,7 @@ defmodule Lox.Lexer do
   end
 
   def is_whitespace(c) do
-    (c == "") || (c == " ") || 
-    (c == "\t") || (c == "\r")
+    c == "" || c == " " || c == "\t" || c == "\r"
   end
 
   def tokenize(content) do
@@ -202,7 +213,4 @@ defmodule Lox.Lexer do
   def tokenize([], tokens) do
     Enum.reverse([Token.new(type: :EOF, lexeme: "") | tokens])
   end
-
 end
-
-

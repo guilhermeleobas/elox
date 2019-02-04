@@ -3,7 +3,6 @@ defmodule EnvironmentError do
 end
 
 defmodule Lox.Environment do
-
   alias Lox.{
     Token,
     Environment
@@ -47,8 +46,9 @@ defmodule Lox.Environment do
 
   def contains(%Environment{} = env, var) do
     case Map.has_key?(env.inner, var) do
-      true -> 
+      true ->
         true
+
       false ->
         contains(env.outer, var)
     end
@@ -64,6 +64,7 @@ defmodule Lox.Environment do
     case Map.has_key?(env.inner, var) do
       true ->
         %Environment{inner: Map.put(env.inner, var, value), outer: env.outer}
+
       false ->
         outer = update(env.outer, var, value)
         %Environment{inner: env.inner, outer: outer}
@@ -75,9 +76,4 @@ defmodule Lox.Environment do
   def put(%Environment{} = env, var, value) do
     %Environment{inner: Map.put(env.inner, var, value), outer: env.outer}
   end
-
 end
-
-
-
-

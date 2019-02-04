@@ -1,10 +1,8 @@
 alias Lox.Ast.Literal
 
 defmodule Lox.Ast.Literal do
-
   @enforce_keys [:token]
   defstruct [:token]
-
 end
 
 defimpl String.Chars, for: Literal do

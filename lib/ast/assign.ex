@@ -1,5 +1,4 @@
 defmodule Lox.Ast.Assign do
-
   @enforce_keys [:name, :expr]
   defstruct [:name, :expr]
 
@@ -8,5 +7,4 @@ defmodule Lox.Ast.Assign do
       "assign"
     end
   end
-  
 end

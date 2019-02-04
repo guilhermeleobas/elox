@@ -1,5 +1,4 @@
 defmodule Lox.Ast.Stmt do
-
   @enforce_keys [:expr]
   defstruct [:expr]
 
@@ -8,5 +7,4 @@ defmodule Lox.Ast.Stmt do
       Kernel.to_string(stmt.expr)
     end
   end
-  
 end

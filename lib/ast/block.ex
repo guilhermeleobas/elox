@@ -1,5 +1,4 @@
 defmodule Lox.Ast.Block do
-
   @enforce_keys [:stmt_list]
   defstruct [:stmt_list]
 
@@ -8,5 +7,4 @@ defmodule Lox.Ast.Block do
       "block"
     end
   end
-  
 end

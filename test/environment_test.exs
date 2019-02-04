@@ -20,8 +20,8 @@ defmodule EnvironmentTest do
     value = 2.0
 
     env =
-    Environment.new()
-    |> Environment.put(var, value)
+      Environment.new()
+      |> Environment.put(var, value)
 
     assert env == %Environment{outer: nil, inner: %{"a" => 2}}
   end
@@ -30,31 +30,30 @@ defmodule EnvironmentTest do
     var = "a"
     value = 2.0
 
-    gv = 
-    Environment.new()
-    |> Environment.put(var, value)
-    |> Environment.get(var)
+    gv =
+      Environment.new()
+      |> Environment.put(var, value)
+      |> Environment.get(var)
 
     assert gv == value
   end
 
   test "Environment: get a variable that do not exists" do
-    
-    assert_raise EnvironmentError, "Undefined variable: 'abcd'", fn -> 
+    assert_raise EnvironmentError, "Undefined variable: 'abcd'", fn ->
       var = Token.new(type: :STRING, lexeme: "abcd")
+
       Environment.new()
       |> Environment.get(var)
     end
-
   end
 
   test "Environment: contains" do
     var = "a"
     value = 2.0
 
-    env = 
-    Environment.new()
-    |> Environment.put(var, value)
+    env =
+      Environment.new()
+      |> Environment.put(var, value)
 
     assert Environment.contains(env, var) == true
   end
