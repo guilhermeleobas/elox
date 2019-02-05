@@ -378,97 +378,104 @@ defmodule Lox.Parser do
 
   ###############################################################################################
 
-  def parse_logic(p, left) do
-    # logic   → equality ( ( "or" | "and" ) logic )* ;
-
-    # left = equality
-    cond do
-      match(p, :OR) || match(p, :AND) ->
-        operator = p.curr.type
-        {p, right} = parse_logic(next_token(p), nil)
-        {p, %Logical{left: left, operator: operator, right: right}}
-
-      true ->
-        parse_equality(p)
+  def parse_logic_exprs(p, left) do
+    if match(p, :OR) || match(p, :AND) do
+      op_token = p.curr
+      op = op_token.type
+      {p, right} = parse_equality(next_token(p))
+      {p, bin} = {p, %Logical{left: left, operator: op, right: right}}
+      parse_logic_exprs(p, bin)
+    else
+      {p, left}
     end
   end
 
+  def parse_logic(p, left) do
+    parse_logic_exprs(p, left)
+  end
+
   ###############################################################################################
+  
+  def parse_equality_exprs(p, left) do
+    if match(p, :BANG_EQUAL) || match(p, :EQUAL_EQUAL) do
+      op_token = p.curr
+      op = op_token.type
+      {p, right} = parse_comparison(next_token(p))
+      {p, bin} = {p, %Binary{token: op_token, left: left, operator: op, right: right}}
+      parse_addition_exprs(p, bin)
+    else
+      {p, left}
+    end
+  end
 
   def parse_equality(p) do
     # equality → comparison ( ( "!=" | "==" ) comparison )* ;
-
     {p, left} = parse_comparison(p)
-    op_token = p.curr
-
-    case op_token.type do
-      op when op in [:BANG_EQUAL, :EQUAL_EQUAL] ->
-        {p, right} = parse_comparison(next_token(p))
-
-        {p, %Binary{token: op_token, left: left, operator: op, right: right}}
-
-      _ ->
-        {p, left}
-    end
+    parse_equality_exprs(p, left)
   end
 
   ###############################################################################################
 
+  def parse_comparison_exprs(p, left) do
+    if match(p, :GREATER) || match(p, :GREATER_EQUAL) || match(p, :LESS) || match(p, :LESS_EQUAL) do
+      op_token = p.curr
+      op = op_token.type
+      {p, right} = parse_addition(next_token(p))
+      {p, bin} = {p, %Binary{token: op_token, left: left, operator: op, right: right}}
+      parse_comparison_exprs(p, bin)
+    else
+      {p, left}
+    end
+  end
+  
   def parse_comparison(p) do
     # comparison → addition ( ( ">" | ">=" | "<" | "<=" ) addition )* ;
 
     {p, left} = parse_addition(p)
-    op_token = p.curr
-
-    case op_token.type do
-      op when op in [:GREATER, :GREATER_EQUAL, :LESS, :LESS_EQUAL] ->
-        {p, right} = parse_addition(next_token(p))
-
-        {p, %Binary{token: op_token, left: left, operator: op, right: right}}
-
-      _ ->
-        {p, left}
-    end
+    parse_comparison_exprs(p, left)
   end
 
   ###############################################################################################
+
+  def parse_addition_exprs(p, left) do
+    if match(p, :MINUS) || match(p, :PLUS) do
+      op_token = p.curr
+      op = op_token.type
+      {p, right} = parse_multiplication(next_token(p))
+      {p, bin} = {p, %Binary{token: op_token, left: left, operator: op, right: right}}
+      parse_addition_exprs(p, bin)
+    else
+      {p, left}
+    end
+  end
 
   def parse_addition(p) do
     # addition → multiplication ( ( "-" | "+" ) multiplication )* ;
-
     {p, left} = parse_multiplication(p)
-    op_token = p.curr
-
-    case op_token.type do
-      op when op in [:MINUS, :PLUS] ->
-        {p, right} = parse_multiplication(next_token(p))
-
-        {p, %Binary{token: op_token, left: left, operator: op, right: right}}
-
-      _ ->
-        {p, left}
-    end
+    parse_addition_exprs(p, left)
   end
 
   ###############################################################################################
-
-  def parse_multiplication(p) do
-    # multiplication → unary ( ( "/" | "*" ) unary )* ;
-
-    {p, left} = parse_unary(p)
-    op_token = p.curr
-
-    case op_token.type do
-      op when op in [:STAR, :SLASH] ->
-        {p, right} = parse_unary(next_token(p))
-
-        {p, %Binary{token: op_token, left: left, operator: op, right: right}}
-
-      _ ->
-        {p, left}
+  
+  
+  def parse_multiplication_exprs(p, left) do
+    if match(p, :STAR) || match(p, :SLASH) do
+      op_token = p.curr
+      op = op_token.type
+      {p, right} = parse_unary(next_token(p))
+      {p, bin} = {p, %Binary{token: op_token, left: left, operator: op, right: right}}
+      parse_multiplication_exprs(p, bin)
+    else
+      {p, left}
     end
   end
 
+  def parse_multiplication(p) do
+    # multiplication → unary ( ( "/" | "*" ) unary )* ;
+    {p, left} = parse_unary(p)
+    parse_multiplication_exprs(p, left)
+  end
+  
   ###############################################################################################
 
   def parse_unary(p) do
