@@ -47,7 +47,7 @@ defmodule LexerTest do
 
   @tag :invalid
   test "invalid digit" do
-    assert_raise LexerError, "Error creating token for number 1234.", fn ->
+    assert_raise LexerError, "Error creating token for number 1234. on line 1", fn ->
       Lexer.tokenize("1234.")
     end
   end
@@ -98,28 +98,30 @@ defmodule LexerTest do
   end
 
   test "small example" do
-    program = "// this is a comment
-(( )){} // grouping stuff
-!*+-/=<> <= == // operators"
+    program = """
+    // this is a comment
+    (( )){} // grouping stuff
+    !*+-/=<> <= == // operators
+    """
 
     assert Lexer.tokenize(program) == [
-             %Token{lexeme: "(", line: -1, type: :LEFT_PAREN},
-             %Token{lexeme: "(", line: -1, type: :LEFT_PAREN},
-             %Token{lexeme: ")", line: -1, type: :RIGHT_PAREN},
-             %Token{lexeme: ")", line: -1, type: :RIGHT_PAREN},
-             %Token{lexeme: "{", line: -1, type: :LEFT_BRACE},
-             %Token{lexeme: "}", line: -1, type: :RIGHT_BRACE},
-             %Token{lexeme: "!", line: -1, type: :BANG},
-             %Token{lexeme: "*", line: -1, type: :STAR},
-             %Token{lexeme: "+", line: -1, type: :PLUS},
-             %Token{lexeme: "-", line: -1, type: :MINUS},
-             %Token{lexeme: "/", line: -1, type: :SLASH},
-             %Token{lexeme: "=", line: -1, type: :EQUAL},
-             %Token{lexeme: "<", line: -1, type: :LESS},
-             %Token{lexeme: ">", line: -1, type: :GREATER},
-             %Token{lexeme: "<=", line: -1, type: :LESS_EQUAL},
-             %Token{lexeme: "==", line: -1, type: :EQUAL_EQUAL},
-             %Token{lexeme: "", line: -1, type: :EOF}
+             %Token{lexeme: "(", line: 2, type: :LEFT_PAREN},
+             %Token{lexeme: "(", line: 2, type: :LEFT_PAREN},
+             %Token{lexeme: ")", line: 2, type: :RIGHT_PAREN},
+             %Token{lexeme: ")", line: 2, type: :RIGHT_PAREN},
+             %Token{lexeme: "{", line: 2, type: :LEFT_BRACE},
+             %Token{lexeme: "}", line: 2, type: :RIGHT_BRACE},
+             %Token{lexeme: "!", line: 3, type: :BANG},
+             %Token{lexeme: "*", line: 3, type: :STAR},
+             %Token{lexeme: "+", line: 3, type: :PLUS},
+             %Token{lexeme: "-", line: 3, type: :MINUS},
+             %Token{lexeme: "/", line: 3, type: :SLASH},
+             %Token{lexeme: "=", line: 3, type: :EQUAL},
+             %Token{lexeme: "<", line: 3, type: :LESS},
+             %Token{lexeme: ">", line: 3, type: :GREATER},
+             %Token{lexeme: "<=", line: 3, type: :LESS_EQUAL},
+             %Token{lexeme: "==", line: 3, type: :EQUAL_EQUAL},
+             %Token{lexeme: "", line: 4, type: :EOF}
            ]
   end
 end

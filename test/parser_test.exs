@@ -2,7 +2,6 @@ defmodule ParserTest do
   alias Lox.Ast.{
     Literal,
     Binary,
-    Stmt,
     PrintStmt,
     VarDecl
   }
@@ -79,7 +78,7 @@ defmodule ParserTest do
        [
          %PrintStmt{
            expr: %Literal{
-             token: %Token{lexeme: "true", line: -1, type: :TRUE}
+             token: Token.new(type: :TRUE, lexeme: "true")
            }
          }
        ]},
@@ -99,18 +98,18 @@ defmodule ParserTest do
          %Lox.Ast.PrintStmt{
            expr: %Lox.Ast.Binary{
              left: %Lox.Ast.Literal{
-               token: %Token{lexeme: "2.0", line: -1, type: :NUMBER}
+               token: Token.new(type: :NUMBER, lexeme: "2.0")
              },
              operator: :PLUS,
              right: %Lox.Ast.Literal{
-               token: %Token{lexeme: "3.0", line: -1, type: :NUMBER}
+               token: Token.new(type: :NUMBER, lexeme: "3.0")
              },
-             token: %Token{lexeme: "+", line: -1, type: :PLUS}
+             token: Token.new(type: :PLUS, lexeme: "+")
            }
          },
          %Lox.Ast.PrintStmt{
            expr: %Lox.Ast.Literal{
-             token: %Token{lexeme: "true", line: -1, type: :TRUE}
+             token: Token.new(type: :TRUE, lexeme: "true")
            }
          }
        ]}
@@ -135,19 +134,19 @@ defmodule ParserTest do
     tokens = [
       %Lox.Ast.VarDecl{
         expr: %Lox.Ast.Literal{
-          token: %Token{lexeme: "2.0", line: -1, type: :NUMBER}
+          token: %Token{lexeme: "2.0", line: 1, type: :NUMBER}
         },
-        name: %Token{lexeme: "a", line: -1, type: :IDENTIFIER}
+        name: %Token{lexeme: "a", line: 1, type: :IDENTIFIER}
       },
       %Lox.Ast.VarDecl{
         expr: nil,
-        name: %Token{lexeme: "b", line: -1, type: :IDENTIFIER}
+        name: %Token{lexeme: "b", line: 2, type: :IDENTIFIER}
       },
       %Lox.Ast.Stmt{
         expr: %Lox.Ast.Assign{
-          name: %Token{lexeme: "b", line: -1, type: :IDENTIFIER},
+          name: %Token{lexeme: "b", line: 3, type: :IDENTIFIER},
           expr: %Lox.Ast.Literal{
-            token: %Token{lexeme: "a", line: -1, type: :IDENTIFIER}
+            token: %Token{lexeme: "a", line: 3, type: :IDENTIFIER}
           }
         }
       }
@@ -170,9 +169,9 @@ defmodule ParserTest do
         stmt_list: [
           %Lox.Ast.VarDecl{
             expr: %Lox.Ast.Literal{
-              token: %Lox.Token{lexeme: "\"Hello World!\"", line: -1, type: :STRING}
+              token: %Lox.Token{lexeme: "\"Hello World!\"", line: 2, type: :STRING}
             },
-            name: %Lox.Token{lexeme: "a", line: -1, type: :IDENTIFIER}
+            name: %Lox.Token{lexeme: "a", line: 2, type: :IDENTIFIER}
           }
         ]
       }
@@ -193,10 +192,10 @@ defmodule ParserTest do
         expr: %Lox.Ast.Call{
           args: [
             %Lox.Ast.Literal{
-              token: %Lox.Token{lexeme: "\"abc\"", line: -1, type: :STRING}
+              token: Token.new(lexeme: "\"abc\"", type: :STRING)
             },
             %Lox.Ast.Literal{
-              token: %Lox.Token{lexeme: "7.0", line: -1, type: :NUMBER}
+              token: Token.new(lexeme: "7.0", type: :NUMBER)
             }
           ],
           callee: %Lox.Ast.Call{
@@ -204,23 +203,23 @@ defmodule ParserTest do
             callee: %Lox.Ast.Call{
               args: [
                 %Lox.Ast.Literal{
-                  token: %Lox.Token{lexeme: "3.0", line: -1, type: :NUMBER}
+                  token: Token.new(lexeme: "3.0", type: :NUMBER)
                 },
                 %Lox.Ast.Literal{
-                  token: %Lox.Token{lexeme: "4.0", line: -1, type: :NUMBER}
+                  token: Token.new(lexeme: "4.0", type: :NUMBER)
                 }
               ],
               callee: %Lox.Ast.Call{
                 args: [
                   %Lox.Ast.Literal{
-                    token: %Lox.Token{lexeme: "1.0", line: -1, type: :NUMBER}
+                    token: Token.new(lexeme: "1.0", type: :NUMBER)
                   },
                   %Lox.Ast.Literal{
-                    token: %Lox.Token{lexeme: "2.0", line: -1, type: :NUMBER}
+                    token: Token.new(lexeme: "2.0", type: :NUMBER)
                   }
                 ],
                 callee: %Lox.Ast.Literal{
-                  token: %Lox.Token{lexeme: "average", line: -1, type: :IDENTIFIER}
+                  token: Token.new(lexeme: "average", type: :IDENTIFIER)
                 }
               }
             }
@@ -254,9 +253,9 @@ defmodule ParserTest do
     tokens = [
       %Lox.Ast.Function{
         args: [
-          %Lox.Token{lexeme: "a", line: -1, type: :IDENTIFIER},
-          %Lox.Token{lexeme: "b", line: -1, type: :IDENTIFIER},
-          %Lox.Token{lexeme: "c", line: -1, type: :IDENTIFIER}
+          %Lox.Token{lexeme: "a", line: 1, type: :IDENTIFIER},
+          %Lox.Token{lexeme: "b", line: 1, type: :IDENTIFIER},
+          %Lox.Token{lexeme: "c", line: 1, type: :IDENTIFIER}
         ],
         body: %Lox.Ast.Block{
           stmt_list: [
@@ -265,36 +264,36 @@ defmodule ParserTest do
                 left: %Lox.Ast.Grouping{
                   expr: %Lox.Ast.Binary{
                     left: %Lox.Ast.Literal{
-                      token: %Lox.Token{lexeme: "a", line: -1, type: :IDENTIFIER}
+                      token: %Lox.Token{lexeme: "a", line: 2, type: :IDENTIFIER}
                     },
                     operator: :PLUS,
                     right: %Lox.Ast.Literal{
-                      token: %Lox.Token{lexeme: "b", line: -1, type: :IDENTIFIER}
+                      token: %Lox.Token{lexeme: "b", line: 2, type: :IDENTIFIER}
                     },
-                    token: %Lox.Token{lexeme: "+", line: -1, type: :PLUS}
+                    token: %Lox.Token{lexeme: "+", line: 2, type: :PLUS}
                   }
                 },
                 operator: :PLUS,
                 right: %Lox.Ast.Literal{
-                  token: %Lox.Token{lexeme: "c", line: -1, type: :IDENTIFIER}
+                  token: %Lox.Token{lexeme: "c", line: 2, type: :IDENTIFIER}
                 },
-                token: %Lox.Token{lexeme: "+", line: -1, type: :PLUS}
+                token: %Lox.Token{lexeme: "+", line: 2, type: :PLUS}
               },
-              name: %Lox.Token{lexeme: "d", line: -1, type: :IDENTIFIER}
+              name: %Lox.Token{lexeme: "d", line: 2, type: :IDENTIFIER}
             },
             %Lox.Ast.Return{
               expr: %Lox.Ast.Literal{
-                token: %Lox.Token{lexeme: "d", line: -1, type: :IDENTIFIER}
+                token: %Lox.Token{lexeme: "d", line: 3, type: :IDENTIFIER}
               },
-              keyword: %Lox.Token{lexeme: "return", line: -1, type: :RETURN}
+              keyword: %Lox.Token{lexeme: "return", line: 3, type: :RETURN}
             }
           ]
         },
-        name: %Lox.Token{lexeme: "sum", line: -1, type: :IDENTIFIER}
+        name: %Lox.Token{lexeme: "sum", line: 1, type: :IDENTIFIER}
       }
     ]
 
-    assert tokens =
+    assert tokens ==
              Lexer.tokenize(program)
              |> Parser.parse()
   end

@@ -9,7 +9,11 @@ defmodule Lox.Token do
   defstruct [:type, :lexeme, :line]
 
   def new(type: type, lexeme: lexeme) do
-    %Token{type: type, lexeme: lexeme, line: -1}
+    %Token{type: type, lexeme: lexeme, line: 1}
+  end
+
+  def new(lexeme: lexeme, type: type) do
+    %Token{type: type, lexeme: lexeme, line: 1}
   end
 
   def new(type: type, lexeme: lexeme, line: line) do

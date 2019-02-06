@@ -42,12 +42,17 @@ defmodule Lox.Parser do
 
   # `expect` checks if the current token is the expected one
   # if yes, advance to the next token. Otherwise, throws an error
-  defp expect(%Lox.Parser{} = p, expected_type) do
+  defp expect(%Lox.Parser{} = p, expected_type, msg \\ "") do
     if p.curr.type == expected_type do
       next_token(p)
     else
-      raise ParserError,
-        message: "Expected #{expected_type} but got:\n curr: #{p.curr} \n peek: #{p.peek}"
+      message = 
+        if msg == "" do
+          "Expected #{expected_type} but got #{p.curr.type} on line #{p.curr.line}"
+        else
+          msg
+        end
+      raise ParserError, message: message
     end
   end
 
@@ -133,7 +138,7 @@ defmodule Lox.Parser do
         {p, [idtn | rest]}
 
       true ->
-        raise ParserError, message: "Expected :IDENTIFIER/:COMMA/:RIGHT_PAREN but got #{p.curr}"
+        expect(p, nil, "Expected :IDENTIFIER/:COMMA/:RIGHT_PAREN but got #{p.curr.type} on line #{p.curr.line}")
     end
   end
 
@@ -149,7 +154,8 @@ defmodule Lox.Parser do
     {p, body} = parse_block(p)
 
     if length(args) > 8 do
-      raise ParserError, message: "Function '#{name}' declared with more than 8 arguments"
+      raise ParserError,
+        message: "Function '#{name}' declared with more than 8 arguments"
     end
 
     {p, %Function{name: name, args: args, body: body}}
@@ -522,7 +528,7 @@ defmodule Lox.Parser do
         parse_call(p, function_name, calls_args ++ [args])
 
       true ->
-        raise ParserError, message: "Expected :SEMICOLON or :LEFT_PAREN but got #{p.curr}"
+        expect(p, nil, "Expected :SEMICOLON or :LEFT_PAREN but got #{p.curr.type} on line #{p.curr.line}")
     end
   end
 
@@ -562,8 +568,8 @@ defmodule Lox.Parser do
         {expect(p, :RIGHT_PAREN), %Grouping{expr: expr}}
 
       _ ->
-        msg = "Expected a number, string, false, true, nil, (expr) but got #{p.curr}"
-        raise ParserError, message: msg
+        msg = "Expected a number, string, false, true, nil, (expr) but got #{p.curr.type} on line #{p.curr.line}"
+        expect(p, nil, msg)
     end
   end
 end

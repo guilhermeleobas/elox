@@ -43,7 +43,7 @@ defmodule AstFunctionTest do
       functions
       |> Enum.map(fn x -> Kernel.to_string(x) end)
     
-    assert names = ["<fn average>", "<fn sum>"]
+    assert names == ["<fn average>", "<fn sum>"]
   end
 
   test "test function decl/call arith method" do
