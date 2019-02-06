@@ -219,15 +219,50 @@ defmodule Eval do
   end
   
   ###############################################################################################
+  
+  defp check_arity(%Function{} = function, %Call{} = call) do
+    fn_arity = Function.arity(function)
+    call_arity = Call.arity(call)
+
+    fun_name = Function.get_name(function)
+    fn_line = Function.get_line(function)
+    callee_name = Call.get_name(call)
+    call_line = Call.get_line(call)
+
+    if fn_arity != call_arity do
+      raise EvalError, 
+        message: "Function '#{fun_name}' was declared with '#{fn_arity}' parameters (line: #{fn_line}) 
+        but called with '#{call_arity}' (line: #{call_line})"
+    end
+    true
+  end
+
+  defp bind_args(%Environment{} = outer, %Function{args: fn_args} = function, %Call{args: call_args} = call) do
+    inner = Environment.new(outer)
+    Enum.zip(fn_args, call_args)
+    |> Enum.reduce(inner, fn {fn_arg, call_arg}, inner ->
+      key = fn_arg.lexeme
+      {_, value} = eval(outer, call_arg)
+      Environment.put(inner, fn_arg.lexeme, value)
+    end)
+  end
 
   defp eval(%Environment{} = env, %Function{} = function) do
-    
+    IO.inspect(function)
+    key = Function.get_name(function)
+    env = Environment.put(env, key, function)
+    {env, nil}
   end
   
-  ###############################################################################################
-  
   defp eval(%Environment{} = env, %Call{} = call) do
-
+    callee = Call.get_name(call)
+    fun = Environment.get(env, callee, opts = [type: "function"])
+    check_arity(fun, call) # raises an exception
+    fn_env = bind_args(env, fun, call)
+    {_, return_value} = eval(fn_env, fun.body)
+    IO.inspect(return_value, label: "return")
+    {env, nil}
+    
   end
 
   ###############################################################################################

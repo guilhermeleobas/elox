@@ -19,6 +19,10 @@ defmodule Lox.Token do
   def new(type: type, lexeme: lexeme, line: line) do
     %Token{type: type, lexeme: lexeme, line: line}
   end
+
+  def get_line(%Token{line: line} = _token) do
+    line
+  end
 end
 
 defimpl String.Chars, for: Lox.Token do

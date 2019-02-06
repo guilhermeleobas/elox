@@ -26,15 +26,17 @@ defmodule Lox.Environment do
   end
 
   ############################
-
-  def get(nil, var) do
-    raise EnvironmentError, message: "Undefined variable: '#{var}'"
+  def get(_env, _key, opts \\ [type: "variable"])
+  def get(nil, key, opts) do
+    raise EnvironmentError, message: "Undefined #{opts[:type]}: '#{key}'"
   end
 
-  def get(%Environment{} = env, var) do
-    case Map.get(env.inner, var) do
-      nil -> get(env.outer, var)
-      value -> value
+  def get(%Environment{} = env, key, opts) do
+    case Map.get(env.inner, key) do
+      nil -> 
+        get(env.outer, key, opts)
+      value -> 
+        value
     end
   end
 
@@ -73,7 +75,7 @@ defmodule Lox.Environment do
 
   ############################
 
-  def put(%Environment{} = env, var, value) do
-    %Environment{inner: Map.put(env.inner, var, value), outer: env.outer}
+  def put(%Environment{} = env, key, value) do
+    %Environment{inner: Map.put(env.inner, key, value), outer: env.outer}
   end
 end

@@ -218,14 +218,23 @@ defmodule EvalTest do
   test "eval for syntax" do
     {:ok, _program} = File.read('test/lox/for_syntax.lox')
 
+    Eval.eval_program("""
+    fun bar(cond){
+      if (cond) return;
+      return "no";
+    }
+    bar(true);
+    """)
+
     # Eval.eval_program("""
-    #   fun bar() {
+    # fun bar(a, b) {
     #   for (var i = 0;; i = i + 1) {
     #     print i;
     #     if (i >= 2) return;
     #   }
     # }
-    # bar();
+    # var a = 5;
+    # bar(2 + a, 3);
     # """)
 
     # assert capture_io(fn ->

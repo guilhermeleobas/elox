@@ -48,7 +48,7 @@ defmodule Lox.Parser do
     else
       message = 
         if msg == "" do
-          "Expected #{expected_type} but got #{p.curr.type} on line #{p.curr.line}"
+          "Expected #{expected_type} but got #{p.curr} on line #{p.curr.line}"
         else
           msg
         end
@@ -114,13 +114,16 @@ defmodule Lox.Parser do
   def parse_return_stmt(p) do
     # returnStmt → "return" expression? ";" ;
     {p, ret_keyword} = consume(p, :RETURN)
-
-    if match(p, :SEMICOLON) do
-      {expect(p, :SEMICOLON), nil}
-    else
-      {p, expr} = parse_expression(p)
-      {expect(p, :SEMICOLON), %Return{keyword: ret_keyword, expr: expr}}
-    end
+    
+    {p, expr} = 
+      if match(p, :SEMICOLON) do
+        raise ParserError, message: "I need to return a Nil Literal token and not just nil!!!!"
+        {expect(p, :SEMICOLON), nil}
+      else
+        {p, expr} = parse_expression(p)
+        {expect(p, :SEMICOLON), expr}
+      end
+    {p, %Return{keyword: ret_keyword, expr: expr}}
   end
 
   def parse_func_decl_arguments(p) do
@@ -541,14 +544,18 @@ defmodule Lox.Parser do
 
   def parse_call(p) do
     # call  → primary ( "(" arguments? ")" )* ;
-
+    
     {p, function_name} = parse_primary(p)
-
+      
     if match(p, :LEFT_PAREN) do
       {p, call_args} = parse_call(p, function_name, [])
 
+      # function_name is a literal that contains the actual token
+      # for the name. We send to the call the actual token and 
+      # not the literal
+
       call =
-        Enum.reduce(call_args, function_name, fn args, acc ->
+        Enum.reduce(call_args, function_name.token, fn args, acc ->
           %Call{callee: acc, args: args}
         end)
 
