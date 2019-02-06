@@ -1,21 +1,86 @@
-# Lox
+# ELox
+A Elixir port of jlox, the Lox language's AST interpreter (http://www.craftinginterpreters.com/). This is still a work in progress.
 
-**TODO: Add description**
+## What has been done so far?
 
-## Installation
+**Lexical Analysis**
 
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
-by adding `lox` to your list of dependencies in `mix.exs`:
+Done!
 
-```elixir
-def deps do
-  [
-    {:lox, "~> 0.1.0"}
-  ]
-end
+**Parsing/Interpreter**:
+
+Everything until function call/declaration.
+
+**Grammar**:
+
 ```
+program     → declaration* EOF ;
 
-Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
-and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
-be found at [https://hexdocs.pm/lox](https://hexdocs.pm/lox).
+declaration → varDecl
+            | funDecl
+            | statement ;
 
+statement   → exprStmt
+            | ifStmt
+            | printStmt 
+            | returnStmt
+            | whileStmt
+            | forStmt
+            | block ;
+
+funDecl  → "fun" function ;
+function → IDENTIFIER "(" parameters? ")" block ;
+
+forStmt   → "for" "(" ( varDecl | exprStmt | ";" )
+                      expression? ";"
+                      expression? ")" statement ;
+
+block → "{" declaration* "}" ;
+
+ifStmt    → "if" "(" expression ")" statement ( "else" statement )? ;
+
+varDecl → "var" IDENTIFIER ( "=" expression )? ";" ;
+
+exprStmt  → expression ";" ;
+printStmt → "print" expression ";" ;
+
+whileStmt → "while" "(" expression ")" statement ;
+
+returnStmt → "return" expression? ";" ;
+
+expression → assignment ;
+assignment → identifier "=" assignment
+           | equality
+           | logic ;
+
+logic   → equality ( ( "or" | "and" ) logic )* ;
+
+equality       → comparison ( ( "!=" | "==" ) comparison )* ;
+comparison     → addition ( ( ">" | ">=" | "<" | "<=" ) addition )* ;
+addition       → multiplication ( ( "-" | "+" ) multiplication )* ;
+multiplication → unary ( ( "/" | "*" ) unary )* ;
+
+unary          → ( "!" | "-" ) unary
+               | call ;
+
+call  → primary ( "(" arguments? ")" )* ";" ;
+
+arguments → expression ( "," expression )* ;
+
+primary        → NUMBER | STRING | "false" | "true" | "nil" | IDENTIFIER
+               | "(" expression ")" ;
+               
+               
+expression → literal
+           | unary
+           | binary
+           | grouping ;
+
+literal    → NUMBER | STRING | "false" | "true" | "nil" | IDENTIFIER;
+grouping   → "(" expression ")" ;
+unary      → ( "-" | "!" ) expression ;
+binary     → expression operator expression ;
+operator   → "==" | "!=" | "<" | "<=" | ">" | ">="
+           | "+"  | "-"  | "*" | "/" ;
+
+```

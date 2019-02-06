@@ -27,6 +27,9 @@ defmodule EvalTest do
     values = [
       {"2 + 3;", 5.0},
       {"(5 - (3 - 1)) + -1;", 2.0},
+      {"5 * 3 * 1;", 15.0},
+      {"5 + 3 - 1;", 7.0},
+      {"5 + 3 * 4 / 2 - 1;", 10.0},
       {"!false;", true},
       {"!true;", false},
       {"2 > 3;", false},
@@ -192,7 +195,7 @@ defmodule EvalTest do
            end) == "\"a < 1\""
   end
 
-  test "eval and" do
+  test "eval and/or" do
     program = """
     print "hi" or 2;
     print nil or "yes";
