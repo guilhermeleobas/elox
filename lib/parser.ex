@@ -117,8 +117,7 @@ defmodule Lox.Parser do
     
     {p, expr} = 
       if match(p, :SEMICOLON) do
-        raise ParserError, message: "I need to return a Nil Literal token and not just nil!!!!"
-        {expect(p, :SEMICOLON), nil}
+        {expect(p, :SEMICOLON), %Literal{token: Token.new(type: :NIL, lexeme: "nil", line: ret_keyword.line)}}
       else
         {p, expr} = parse_expression(p)
         {expect(p, :SEMICOLON), expr}

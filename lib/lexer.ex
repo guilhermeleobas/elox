@@ -94,7 +94,8 @@ defmodule Lox.Lexer do
   end
 
   def identifier_op(chars, tokens, lineno) do
-    {identifier, rest} = Enum.split_while(chars, &is_alpha/1)
+    # We already know that the first char 
+    {identifier, rest} = Enum.split_while(chars, fn c -> is_alpha(c) || is_digit(c) end)
     identifier = Enum.join(identifier)
 
     type = get_identifier_type(identifier)

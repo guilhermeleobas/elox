@@ -216,29 +216,18 @@ defmodule EvalTest do
   end
 
   test "eval for syntax" do
-    {:ok, _program} = File.read('test/lox/for_syntax.lox')
+    {:ok, program} = File.read('test/lox/for_syntax.lox')
 
-    Eval.eval_program("""
-    fun bar(cond){
-      if (cond) return;
-      return "no";
-    }
-    bar(true);
-    """)
+    assert capture_io(fn ->
+      Eval.eval_program(program)
+    end) == "1.02.03.00.01.02.015.00.01.00.01.02.00.01.0"
+  end
 
-    # Eval.eval_program("""
-    # fun bar(a, b) {
-    #   for (var i = 0;; i = i + 1) {
-    #     print i;
-    #     if (i >= 2) return;
-    #   }
-    # }
-    # var a = 5;
-    # bar(2 + a, 3);
-    # """)
+  test "eval function syntax" do
+    {:ok, program} = File.read('test/lox/function_parameters.lox')
 
-    # assert capture_io(fn ->
-             # Eval.eval_program(program)
-           # end) == "1.02.03.00.01.02.015.00.01.00.01.0"
+    assert capture_io(fn ->
+      Eval.eval_program(program)
+    end) == "0.01.03.06.010.015.021.028.036.0"
   end
 end

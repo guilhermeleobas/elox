@@ -218,9 +218,7 @@ defmodule ParserTest do
                     token: Token.new(lexeme: "2.0", type: :NUMBER)
                   }
                 ],
-                callee: %Lox.Ast.Literal{
-                  token: Token.new(lexeme: "average", type: :IDENTIFIER)
-                }
+                callee: Token.new(lexeme: "average", type: :IDENTIFIER)
               }
             }
           }

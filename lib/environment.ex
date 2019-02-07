@@ -42,33 +42,34 @@ defmodule Lox.Environment do
 
   ############################
 
-  def contains(nil, _var) do
+  def contains(nil, _key) do
     false
   end
 
-  def contains(%Environment{} = env, var) do
-    case Map.has_key?(env.inner, var) do
+  def contains(%Environment{} = env, key) do
+    case Map.has_key?(env.inner, key) do
       true ->
         true
 
       false ->
-        contains(env.outer, var)
+        contains(env.outer, key)
     end
   end
 
   ############################
-
-  def update(nil, var, _value) do
-    raise EnvironmentError, message: "Undefined variable: '#{var}'"
+  
+  def update(env, key, value, opts \\ [type: "variable"])
+  def update(nil, key, _value, opts) do
+    raise EnvironmentError, message: "Undefined #{opts[:type]}: '#{key}'"
   end
 
-  def update(%Environment{} = env, var, value) do
-    case Map.has_key?(env.inner, var) do
+  def update(%Environment{} = env, key, value, _opts) do
+    case Map.has_key?(env.inner, key) do
       true ->
-        %Environment{inner: Map.put(env.inner, var, value), outer: env.outer}
+        %Environment{inner: Map.put(env.inner, key, value), outer: env.outer}
 
       false ->
-        outer = update(env.outer, var, value)
+        outer = update(env.outer, key, value)
         %Environment{inner: env.inner, outer: outer}
     end
   end

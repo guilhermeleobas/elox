@@ -2,6 +2,10 @@ defmodule EvalError do
   defexception message: "Parser Error"
 end
 
+defmodule ReturnException do
+  defexception [:message, :value]
+end
+
 defmodule Eval do
   alias Lox.Ast.{
     Literal,
@@ -17,7 +21,8 @@ defmodule Eval do
     Logical,
     While,
     Function,
-    Call
+    Call,
+    Return
   }
 
   alias Lox.{
@@ -208,47 +213,28 @@ defmodule Eval do
 
   defp eval(%Environment{} = env, %If{} = if_stmt) do
     {env, c} = eval(env, if_stmt.cond_expr)
-
+    
     cond do
+      c == true && if_stmt.then_stmt != nil ->
+        eval(env, if_stmt.then_stmt)
       c == false && if_stmt.else_stmt != nil ->
         eval(env, if_stmt.else_stmt)
-
       true ->
-        eval(env, if_stmt.then_stmt)
+        {env, nil}
     end
   end
   
   ###############################################################################################
+
+  defp eval(%Environment{} = env, %Return{} = return) do
+    {env, value} = eval(env, return.expr)
+    throw({env, value})
+  end
   
-  defp check_arity(%Function{} = function, %Call{} = call) do
-    fn_arity = Function.arity(function)
-    call_arity = Call.arity(call)
-
-    fun_name = Function.get_name(function)
-    fn_line = Function.get_line(function)
-    callee_name = Call.get_name(call)
-    call_line = Call.get_line(call)
-
-    if fn_arity != call_arity do
-      raise EvalError, 
-        message: "Function '#{fun_name}' was declared with '#{fn_arity}' parameters (line: #{fn_line}) 
-        but called with '#{call_arity}' (line: #{call_line})"
-    end
-    true
-  end
-
-  defp bind_args(%Environment{} = outer, %Function{args: fn_args} = function, %Call{args: call_args} = call) do
-    inner = Environment.new(outer)
-    Enum.zip(fn_args, call_args)
-    |> Enum.reduce(inner, fn {fn_arg, call_arg}, inner ->
-      key = fn_arg.lexeme
-      {_, value} = eval(outer, call_arg)
-      Environment.put(inner, fn_arg.lexeme, value)
-    end)
-  end
+  ###############################################################################################
+  
 
   defp eval(%Environment{} = env, %Function{} = function) do
-    IO.inspect(function)
     key = Function.get_name(function)
     env = Environment.put(env, key, function)
     {env, nil}
@@ -256,17 +242,51 @@ defmodule Eval do
   
   defp eval(%Environment{} = env, %Call{} = call) do
     callee = Call.get_name(call)
-    fun = Environment.get(env, callee, opts = [type: "function"])
+    fun = Environment.get(env, callee, opts: [type: "function"])
     check_arity(fun, call) # raises an exception
     fn_env = bind_args(env, fun, call)
-    {_, return_value} = eval(fn_env, fun.body)
-    IO.inspect(return_value, label: "return")
-    {env, nil}
+
+    # The idea is that when Elox evals a Return Stmt, it
+    # throws the return value and we catch it here
+    return_value = 
+      try do
+        eval(fn_env, fun.body)
+      catch
+        {_, return_value} -> return_value 
+      end
+    {env, return_value}
     
+  end
+  
+  defp check_arity(%Function{} = function, %Call{} = call) do
+    fn_arity = Function.arity(function)
+    call_arity = Call.arity(call)
+
+    fun_name = Function.get_name(function)
+    fn_line = Function.get_line(function)
+    call_line = Call.get_line(call)
+
+    if fn_arity != call_arity do
+      raise EvalError, 
+        message: "Function '#{fun_name}' was declared with '#{fn_arity}' parameters (line: #{fn_line}) 
+        but called with '#{call_arity}' (line: #{call_line})"
+    end
+    
+    true
+  end
+
+  defp bind_args(%Environment{} = outer, %Function{args: fn_args} = _function, %Call{args: call_args} = _call) do
+    inner = Environment.new(outer)
+    Enum.zip(fn_args, call_args)
+    |> Enum.reduce(inner, fn {fn_arg, call_arg}, inner ->
+      key = fn_arg.lexeme
+      {_, value} = eval(outer, call_arg)
+      Environment.put(inner, key, value)
+    end)
   end
 
   ###############################################################################################
-
+  
   defp is_truthy(value) do
     cond do
       is_nil(value) ->
@@ -284,7 +304,6 @@ defmodule Eval do
 
   def eval_program(program) do
     env = Environment.new()
-    globals = Environment.new()
 
     {values, env} =
       Lexer.tokenize(program)

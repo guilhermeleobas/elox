@@ -12,8 +12,8 @@ defmodule LexerTest do
   end
 
   test "identifier" do
-    token = Lexer.tokenize("abc")
-    assert hd(token) == Token.new(type: :IDENTIFIER, lexeme: "abc")
+    token = Lexer.tokenize("abc123")
+    assert hd(token) == Token.new(type: :IDENTIFIER, lexeme: "abc123")
   end
 
   test "reserved identifiers" do
