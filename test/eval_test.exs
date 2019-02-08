@@ -208,7 +208,7 @@ defmodule EvalTest do
   end
 
   test "eval while syntax" do
-    {:ok, program} = File.read('test/lox/while_syntax.lox')
+    {:ok, program} = File.read('test/while/syntax.lox')
 
     assert capture_io(fn ->
              Eval.eval_program(program)
@@ -216,7 +216,7 @@ defmodule EvalTest do
   end
 
   test "eval for syntax" do
-    {:ok, program} = File.read('test/lox/for_syntax.lox')
+    {:ok, program} = File.read('test/for/syntax.lox')
 
     assert capture_io(fn ->
       Eval.eval_program(program)
@@ -224,10 +224,34 @@ defmodule EvalTest do
   end
 
   test "eval function syntax" do
-    {:ok, program} = File.read('test/lox/function_parameters.lox')
+    {:ok, program} = File.read('test/function/parameters.lox')
 
     assert capture_io(fn ->
       Eval.eval_program(program)
     end) == "0.01.03.06.010.015.021.028.036.0"
+  end
+  
+  test "eval function print" do
+    {:ok, program} = File.read('test/function/print.lox')
+
+    assert capture_io(fn ->
+      Eval.eval_program(program)
+    end) == "<fn foo>"
+  end
+  
+  test "eval function empty_body" do
+    {:ok, program} = File.read('test/function/empty_body.lox')
+    
+    assert capture_io(fn ->
+      Eval.eval_program(program)
+    end) == ""
+  end
+  
+  test "eval function local_recursion" do
+    {:ok, program} = File.read('test/function/local_recursion.lox')
+    
+    assert capture_io(fn ->
+      Eval.eval_program(program)
+    end) == "21.0"
   end
 end

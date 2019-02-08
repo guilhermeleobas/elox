@@ -25,25 +25,23 @@ ifStmt    → "if" "(" expression ")" statement ( "else" statement )? ;
 
 varDecl → "var" IDENTIFIER ( "=" expression )? ";" ;
 
-exprStmt  → expression ";" ;
 printStmt → "print" expression ";" ;
 
 whileStmt → "while" "(" expression ")" statement ;
 
 returnStmt → "return" expression? ";" ;
 
+exprStmt   → expression ";" ;
 expression → assignment ;
 assignment → identifier "=" assignment
            | equality
            | logic ;
 
-logic   → equality ( ( "or" | "and" ) logic )* ;
-
+logic          → equality ( ( "or" | "and" ) logic )* ;
 equality       → comparison ( ( "!=" | "==" ) comparison )* ;
 comparison     → addition ( ( ">" | ">=" | "<" | "<=" ) addition )* ;
 addition       → multiplication ( ( "-" | "+" ) multiplication )* ;
 multiplication → unary ( ( "/" | "*" ) unary )* ;
-
 unary          → ( "!" | "-" ) unary
                | call ;
 
@@ -51,8 +49,13 @@ call  → primary ( "(" arguments? ")" )* ";" ;
 
 arguments → expression ( "," expression )* ;
 
-primary        → NUMBER | STRING | "false" | "true" | "nil" | IDENTIFIER
-               | "(" expression ")" ;
+primary → NUMBER 
+        | STRING 
+        | "false" 
+        | "true" 
+        | "nil"
+        | IDENTIFIER
+        | "(" expression ")" ;
                
                
 expression → literal

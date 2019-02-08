@@ -523,9 +523,7 @@ defmodule Lox.Parser do
 
   def parse_call(p, function_name, calls_args) do
     cond do
-      match(p, :SEMICOLON) ->
-        {p, calls_args}
-
+      # whenever we find a "(", we parse args until we find a ")"
       match(p, :LEFT_PAREN) ->
         {p, args} = parse_func_call_arguments(next_token(p))
 
@@ -537,7 +535,8 @@ defmodule Lox.Parser do
         parse_call(p, function_name, calls_args ++ [args])
 
       true ->
-        expect(p, nil, "Expected :SEMICOLON or :LEFT_PAREN but got #{p.curr.type} on line #{p.curr.line}")
+        {p, calls_args}
+        # expect(p, nil, "Expected :SEMICOLON or :LEFT_PAREN but got #{p.curr.type} on line #{p.curr.line}")
     end
   end
 
@@ -550,14 +549,14 @@ defmodule Lox.Parser do
       {p, call_args} = parse_call(p, function_name, [])
 
       # function_name is a literal that contains the actual token
-      # for the name. We send to the call the actual token and 
-      # not the literal
+      # for the name. We send to the call the token and not the 
+      # literal
 
       call =
         Enum.reduce(call_args, function_name.token, fn args, acc ->
           %Call{callee: acc, args: args}
         end)
-
+      
       {p, call}
     else
       {p, function_name}

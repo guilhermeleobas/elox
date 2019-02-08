@@ -252,10 +252,13 @@ defmodule Eval do
       try do
         eval(fn_env, fun.body)
       catch
-        {_, return_value} -> return_value 
+        {_, return_value} -> return_value # if we reach a return stmt
+      else
+        {_, return_value} -> return_value # if we don't reach a return stmt.
+                                          # i.e. a function with empty body
       end
-    {env, return_value}
     
+    {env, return_value}
   end
   
   defp check_arity(%Function{} = function, %Call{} = call) do
