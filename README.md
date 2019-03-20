@@ -9,7 +9,7 @@ Done!
 
 **Parsing/Interpreter**:
 
-Everything until function call/declaration.
+Everything except classes and closures.
 
 **Grammar**:
 
