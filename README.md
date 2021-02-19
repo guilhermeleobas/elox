@@ -5,7 +5,7 @@ A Elixir port of jlox, the Lox language's AST interpreter (http://www.craftingin
 
 **Lexical Analysis**
 
-Done!
+Done! (#2)  (gh-2)
 
 **Parsing/Interpreter**:
 
